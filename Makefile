@@ -1,8 +1,8 @@
 version := $(shell python3 -c "import configparser; config = configparser.ConfigParser(); config.read('pyproject.toml'); print(config['tool.poetry']['version'][1:-1])")
 
-daml_dit_api_files := $(shell find daml_dit_api -name '*.py') README.md
-daml_dit_api_bdist := dist/daml_dit_api-$(version)-py3-none-any.whl
-daml_dit_api_sdist := dist/daml_dit_api-$(version).tar.gz
+daml_dit_if_files := $(shell find daml_dit_if -name '*.py') README.md
+daml_dit_if_bdist := dist/daml_dit_if-$(version)-py3-none-any.whl
+daml_dit_if_sdist := dist/daml_dit_if-$(version).tar.gz
 
 build_dir := build/.dir
 poetry_build_marker := build/.poetry.build
@@ -28,7 +28,7 @@ deps: $(poetry_install_marker)
 build: package
 
 .PHONY: package
-package: $(daml_dit_api_bdist) $(daml_dit_api_sdist)
+package: $(daml_dit_if_bdist) $(daml_dit_if_sdist)
 
 .PHONY: publish
 publish: package
@@ -45,7 +45,7 @@ version:
 
 .PHONY: typecheck
 typecheck:
-	poetry run python3 -m mypy -p daml_dit_api
+	poetry run python3 -m mypy -p daml_dit_if
 
 .PHONY: test
 test: typecheck
@@ -66,6 +66,6 @@ $(poetry_build_marker): $(build_dir) pyproject.toml $(dazl_files)
 $(poetry_install_marker): $(build_dir) poetry.lock
 	touch $@
 
-$(daml_dit_api_bdist): $(poetry_build_marker)
+$(daml_dit_if_bdist): $(poetry_build_marker)
 
-$(daml_dit_api_sdist): $(poetry_build_marker)
+$(daml_dit_if_sdist): $(poetry_build_marker)
