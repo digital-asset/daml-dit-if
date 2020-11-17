@@ -15,18 +15,21 @@ from dazl.util.prim_types import to_boolean
 from dacite import from_dict, Config
 
 from daml_dit_api import \
-    IntegrationEntryPoint, \
-    IntegrationEnvironment, \
-    IntegrationEvents, \
-    IntegrationRuntimeSpec, \
-    IntegrationTimeEvents, \
-    IntegrationTypeInfo, \
-    IntegrationWebhookRoutes, \
     METADATA_INTEGRATION_ENABLED, \
     METADATA_COMMON_RUN_AS_PARTY, \
     METADATA_INTEGRATION_RUN_AS_PARTY, \
     METADATA_INTEGRATION_TYPE_ID, \
-    PackageMetadata
+    IntegrationRuntimeSpec, \
+    IntegrationTypeInfo
+
+
+from ..api import \
+    IntegrationEntryPoint, \
+    IntegrationEnvironment, \
+    IntegrationEvents
+
+from .integration_queue_context import \
+    IntegrationQueueContext, IntegrationQueueStatus
 
 from .integration_time_context import \
     IntegrationTimeContext, IntegrationTimeStatus
@@ -121,6 +124,7 @@ class IntegrationContext:
         self.error_message = None  # type: Optional[str]
         self.error_time = None  # type: Optional[datetime]
 
+        self.queue_context = None  # type: Optional[IntegrationQueueContext]
         self.time_context = None  # type: Optional[IntegrationTimeContext]
         self.webhook_context = None  # type: Optional[IntegrationWebhookContext]
         self.ledger_context = None  # type: Optional[IntegrationLedgerContext]
@@ -168,8 +172,20 @@ class IntegrationContext:
 
         LOG.info("Starting integration with metadata: %r", metadata)
 
+        self.queue_context = IntegrationQueueContext(client)
+        self.time_context = IntegrationTimeContext(client)
+        self.ledger_context = IntegrationLedgerContext(client)
+        self.webhook_context = IntegrationWebhookContext(client)
+
+        events = IntegrationEvents(
+            queue=self.queue_context,
+            time=self.time_context,
+            ledger=self.ledger_context,
+            webhook=self.webhook_context)
+
         integration_env_data = {
             **metadata,
+            'queue': self.queue_context.sink,
             'party': run_as_party
             }
 
@@ -182,15 +198,6 @@ class IntegrationContext:
             })
         )
 
-        self.time_context = IntegrationTimeContext(client)
-        self.ledger_context = IntegrationLedgerContext(client)
-        self.webhook_context = IntegrationWebhookContext(client)
-
-        events = IntegrationEvents(
-            time=self.time_context,
-            ledger=self.ledger_context,
-            webhook=self.webhook_context)
-
         user_coro = entry_fn(integration_env, events)
 
         LOG.info("Waiting for ledger client to become ready")
@@ -202,6 +209,7 @@ class IntegrationContext:
         LOG.info("Integration ready")
 
         int_coros = [
+            self.queue_context.start(),
             self.time_context.start(),
             self.ledger_context.start()
         ]

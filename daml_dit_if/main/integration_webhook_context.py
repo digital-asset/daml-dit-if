@@ -10,7 +10,7 @@ from .common import \
     without_return_value, \
     as_handler_invocation
 
-from daml_dit_api import IntegrationWebhookRoutes
+from ..api import IntegrationWebhookRoutes
 
 from .log import LOG
 

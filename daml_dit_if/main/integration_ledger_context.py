@@ -7,7 +7,7 @@ from dazl.model.core import ContractMatch
 from dazl.model.reading import ContractCreateEvent
 from dazl.model.writing import EventHandlerResponse
 
-from daml_dit_api import \
+from ..api import \
     IntegrationLedgerEvents, \
     IntegrationLedgerContractCreateEvent, \
     IntegrationLedgerContractArchiveEvent, \

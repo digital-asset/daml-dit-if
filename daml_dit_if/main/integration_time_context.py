@@ -7,8 +7,7 @@ from dazl import AIOPartyClient, Command
 
 from .log import LOG
 
-from daml_dit_api import \
-    IntegrationTimeEvents
+from ..api import IntegrationTimeEvents
 
 from .common import \
     InvocationStatus, \

@@ -7,7 +7,7 @@ from typing import Optional
 
 from dazl import AIOPartyClient
 
-from daml_dit_api import IntegrationResponse
+from ..api import IntegrationResponse
 
 from .log import LOG
 
@@ -81,6 +81,6 @@ def as_handler_invocation(client: 'AIOPartyClient', inv_status: 'InvocationStatu
         except Exception:
             inv_status.error_count += 1
             inv_status.error_message = repr(sys.exc_info()[1])
-            LOG.exception('Error while processing: ' + inv_status)
+            LOG.exception('Error while processing: ' + inv_status.error_message)
 
     return wrapped
