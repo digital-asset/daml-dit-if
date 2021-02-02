@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "daml-dit-if"
-version = "0.3.3"
+version = "0.3.4"
 description = "DABL Integration Framework"
 authors = ["Mike Schaeffer <mike.schaeffer@digitalasset.com>"]
 readme = "README.md"
@@ -13,7 +13,7 @@ aiohttp = "*"
 dacite = "*"
 dazl = ">=7"
 pyyaml = "^5"
-daml-dit-api = "0.3.2"
+daml-dit-api = "0.3.3"
 
 [tool.poetry.dev-dependencies]
 mypy = "*"
