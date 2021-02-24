@@ -1,7 +1,7 @@
 import asyncio
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Tuple, Optional, Callable, Sequence
+from typing import Any, Awaitable, Dict, List, Tuple, Optional, Callable, Sequence
 
 from dazl import AIOPartyClient, Command
 
@@ -25,7 +25,7 @@ class IntegrationQueueStatus:
     queues: 'Sequence[QueueEventStatus]'
 
 
-IntegrationQueueHandler = Callable[[Any], Sequence[Command]]
+IntegrationQueueHandler = Callable[[Any], Awaitable[Sequence[Command]]]
 
 IntegrationQueueDict = Dict[str, Tuple[IntegrationQueueHandler, QueueEventStatus]]
 
@@ -37,14 +37,15 @@ class IntegrationQueueSinkImpl(IntegrationQueueSink):
 
     async def put(self, message: 'Any', queue_name: 'str' = 'default'):
 
-        LOG.info('Queue put: %r', message)
+        LOG.debug('Queue put (%r): %r', queue_name, message)
 
         if queue_name not in self.queues:
-            raise Exception(f'Unknown queue: {queue_name} (valid: {list(self.queues.keys())}) ')
+            raise Exception(
+                f'Unknown queue: {queue_name} (valid: {list(self.queues.keys())}) ')
 
         (handler, _ ) = self.queues[queue_name]
 
-        LOG.info('Queue put handler: %r', handler)
+        LOG.debug('Queue put handler: %r', handler)
 
         await handler(message)
 
@@ -88,16 +89,18 @@ class IntegrationQueueContext(IntegrationQueueEvents):
         return decorator
 
     async def worker(self):
-        LOG.info('Queue context worker starting...')
+        LOG.debug('Queue context worker starting.')
+
         while True:
-            LOG.debug('...waiting for queue event.')
-            fn = await self.queue.get()
+            LOG.debug('Waiting for queue event.')
+
             try:
-                LOG.debug('...received queue event...')
+                fn = await self.queue.get()
+                LOG.debug('Received queue event.')
                 commands = await fn()
 
                 if commands:
-                    LOG.debug('Submitting ledger commands: %r', commands)
+                    LOG.info('Submitting queue event ledger commands: %r', commands)
                     await self.client.submit(commands)
 
             except:  # noqa: E722

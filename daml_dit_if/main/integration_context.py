@@ -1,4 +1,5 @@
 import asyncio
+import os
 import sys
 import yaml
 
@@ -48,7 +49,7 @@ from .common import \
 
 from .config import Configuration
 
-from .log import LOG
+from .log import FAIL, LOG
 
 
 @dataclass(frozen=True)
@@ -89,18 +90,18 @@ def parse_qualified_symbol(symbol_text: str):
     try:
         (module_name, sym_name) = symbol_text.split(':')
     except ValueError:
-        raise Exception(f'Malformed symbol {symbol_text} (Must be [module_name:symbol_name])')
+        FAIL(f'Malformed symbol {symbol_text} (Must be [module_name:symbol_name])')
 
     module = None
 
     try:
-        LOG.info(f'Searching for module {module_name} in qualified symbol {symbol_text}')
+        LOG.debug(f'Searching for module {module_name} in qualified symbol {symbol_text}')
         module = import_module(module_name)
     except:  # noqa
-        LOG.exception(f'Failure importing integration package: {module_name}')
+        FAIL(f'Failure importing integration package: {module_name}')
 
     if module is None:
-        raise Exception(f'Unknown module {module_name} in {symbol_text}')
+        FAIL(f'Unknown module {module_name} in {symbol_text}')
 
     return (module, sym_name)
 
@@ -109,6 +110,7 @@ class IntegrationContext:
 
     def __init__(self,
                  network: 'Network',
+                 run_as_party: 'Optional[str]',
                  integration_type: 'IntegrationTypeInfo',
                  type_id: str,
                  integration_spec: 'IntegrationRuntimeSpec'):
@@ -117,8 +119,13 @@ class IntegrationContext:
 
         self.type_id = type_id
         self.network = network
+        self.run_as_party = run_as_party
         self.integration_type = integration_type
         self.integration_spec = integration_spec
+
+        self._party_fallback_to_metadata()
+
+        LOG.info(f'Running as party: {self.run_as_party}')
 
         self.running = False
         self.error_message = None  # type: Optional[str]
@@ -129,6 +136,26 @@ class IntegrationContext:
         self.webhook_context = None  # type: Optional[IntegrationWebhookContext]
         self.ledger_context = None  # type: Optional[IntegrationLedgerContext]
         self.int_toplevel_coro = None
+
+    def _party_fallback_to_metadata(self):
+
+        if self.run_as_party:
+            return
+
+        # If the party doesn't come in through the preferred
+        # environment variable path, fallback to accepting it through
+        # the metadata in one of two named slots. This accomodates the
+        # the way integrations historically worked through around late
+        # February 2021.
+
+        metadata = self.integration_spec.metadata
+
+        self.run_as_party = \
+            metadata.get(METADATA_COMMON_RUN_AS_PARTY) \
+            or metadata.get(METADATA_INTEGRATION_RUN_AS_PARTY)
+
+        if self.run_as_party is None:
+            FAIL('DAML_LEDGER_PARTY environment variable undefined.')
 
     def get_integration_entrypoint(
             self,
@@ -152,18 +179,8 @@ class IntegrationContext:
 
     async def _load_and_start(self):
         metadata = self.integration_spec.metadata
-        LOG.info('=== REGISTERING INTEGRATION: %r', self.integration_spec)
 
-        run_as_party = metadata.get(METADATA_COMMON_RUN_AS_PARTY)
-
-        if run_as_party is None:
-            LOG.info("Falling back to old-style integration 'run as' party.")
-            run_as_party = metadata.get(METADATA_INTEGRATION_RUN_AS_PARTY)
-
-        if run_as_party is None:
-            raise Exception("No 'run as' party specified for integration.")
-
-        client = self.network.aio_party(run_as_party)
+        client = self.network.aio_party(self.run_as_party)
 
         env_class = self.get_integration_env_class(self.integration_type)
         entry_fn = self.get_integration_entrypoint(self.integration_type)
@@ -186,7 +203,7 @@ class IntegrationContext:
         integration_env_data = {
             **metadata,
             'queue': self.queue_context.sink,
-            'party': run_as_party
+            'party': self.run_as_party
             }
 
         integration_env = from_dict(
@@ -200,13 +217,11 @@ class IntegrationContext:
 
         user_coro = entry_fn(integration_env, events)
 
-        LOG.info("Waiting for ledger client to become ready")
         await client.ready()
 
         await self.ledger_context.process_sweeps()
 
         self.running = True
-        LOG.info("Integration ready")
 
         int_coros = [
             self.queue_context.start(),
