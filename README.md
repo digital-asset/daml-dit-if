@@ -1,39 +1,30 @@
-daml-dit-api
+daml-dit-if
 ====
 
-API definitions for integrations and other sorts of packages to be
-hosted by DABL. This contains the following:
+An application framework for integrations written to be hosted in
+DABL. Integrations are run within DABL itself and serve to mediate the
+relationship between a DABL ledger and external systems. Integrations
+can issue and receive network connections, interoperate with a ledger
+as a specific configured party, and maintain small amounts of locally
+cached data. Due to their privileged status within a DABL cluster,
+integrations require specific permissions to install. Please contact
+[Digital Asset](https://discuss.daml.com/) for more information.
 
-* [The definition for the package metadata format](daml_dit_api/package_metadata.py)
-* [The call API for integration bots](daml_dit_api/integration_api.py)
-* [A framework for simplifying the implementation of integrations](daml_dit_api/main)
+# Integration Packaging
 
-# Package Metadata
+Integrations are packaged in
+[DIT files](https://github.com/digital-asset/daml-dit-api) and built
+using the [`ddit` build tool](https://github.com/digital-asset/daml-dit-ddit).
+Unlike most DIT files, integrations are  a special case of DIT file
+augmented with the ability to run as an executable within a DABL cluster.
+This is done by packaging Python
+[DAZL bot](https://github.com/digital-asset/dazl-client) code into an
+[executable ZIP](https://docs.python.org/3/library/zipapp.html)
+using [PEX](https://github.com/pantsbuild/pex). This file is then
+augumented with the metadata (`dabl-meta.yaml`) and other resources
+needed to make it a fully formed DIT file.
 
-At their core, DIT files are [ZIP archives](https://en.wikipedia.org/wiki/Zip_(file_format))
-that follow a specific set of conventions regarding their content. The
-most important of these conventions is the presence of a YAML metadata
-file at the root of the archive and named `dabl-meta.yaml`. This
-metadata file contains catalog information describing the contents of
-the DIT, as well as any packaging details needed to successfully
-deploy a DIT file into DABL. An example of a deployment instruction is
-a _subdeployment_. A subdeployment instructs DABL to deploy a specific
-subfile within the DIT file. A DIT file that contains an embedded DAR
-file could use a subdeployment to ensure that the embedded DAR file is
-deployed to the ledger when the DIT is deployed. In this way, a DIT
-file composed of multiple artifacts (DARs, Bots, UI's, etc.) can be
-constructed to deploy a set of artifacts to a single ledger in a
-single action.
-
-# Integrations
-
-Integrations are a special case of DIT file that are augmented with
-the ability to run as an executable within a DABL cluster. This is
-done by packaging Python [DAZL bot](https://github.com/DACH-NY/dazl)
-code into an [executable ZIP](https://docs.python.org/3/library/zipapp.html)
-using [PEX](https://github.com/pantsbuild/pex) and augmenting tha
-resulting file with the metadata and other resources needed to make it
-a correctly formed DIT file.
+# Developing Integrations
 
 Logically speaking, DABL integrations are DAZL bots packaged with
 information needed to fit them into the DABL runtime and user
@@ -44,22 +35,112 @@ not. Due to the security implications of running within DABL with
 external network access, integrations can only be deployed with the
 approval of DA staff.
 
-## Developing Integrations
+It is a requirement that DABL integrations are built with the
+framework library defined within this repository. This integration
+framework presents a Python API closely related to the DAZL bot api
+and ensures that integrations follow the conventions required to run
+within DABL. The framework parses ledger connection arguments,
+translates configuration metadata into a domain object specific to the
+integration, and exposes the appropriate health check endpoints
+required to populate the DABL integration user interface.
 
-The easiest way to develop an integration for DABL is to use the
-[framework library](daml_dit_api/main) bundled within this API
-package. The integration framework presents a Python API closely
-related to the DAZL bot api and ensures that integrations follow the
-conventions required to integrate into DABL. The framework parses
-ledger connection arguments, translates configuration metadata into a
-domain object specific to the integration, and exposes the appropriate
-health check endpoints required to populate the DABL integration user
-interface.
+## The Integration Framework API
 
-_Unless you know exactly what you are doing and why you are doing it,
-use the framework._
+The integration framework API has two parts - a Python entry point
+that all integrations must provide and an additional section within
+`dabl-meta.yaml` that describes the properties of a given
+integration. The metadata section includes the name of the entry point
+function for the integration, some descriptive text, and a list of
+all of the configuration arguments that the integration accepts:
 
-### Locally Running an integration DIT.
+The ledger event log integration is defined like this:
+
+```yaml
+catalog:
+
+    ... elided ...
+
+integration_types:
+
+    ... elided ...
+
+    - id: com.projectdabl.integrations.core.ledger_event_log
+      name: Ledger Event Log
+      description: >
+          Writes a log message for all ledger events.
+      entrypoint: core_int.integration_ledger_event_log:integration_ledger_event_log_main
+      env_class: core_int.integration_ledger_event_log:IntegrationLedgerEventLogEnv
+      runtime: python-direct
+      fields:
+          - id: historyBound
+            name: Transaction History Bound
+            description: >
+                Bound on the length of the history maintained by the integration
+                for the purpose of the log fetch endpoint. -1 can be used to remove
+                the bound entirely.
+            field_type: text
+            default_value: "1024"
+```
+
+* `id` - The symbolic identifier used to select the integration type within the DIT.
+* `name` - A user friendly name for the integration.
+* `description` - A description of what the integration does.
+* `entrypoint` - The package qualified name of the entrypoint function.
+* `env_class` - The package qualifies name of the environment class.
+* `runtime` - Always `python-direct`.
+* `fields` - A list of configuration fields. These are passed into the integration at runtime via correspondingly named fields of an instance of the `env_class`.
+
+The Python definition of the entrypoint is this:
+
+
+```python
+@dataclass
+class IntegrationLedgerEventLogEnv(IntegrationEnvironment):
+    historyBound: int
+
+
+def integration_ledger_event_log_main(
+        env: 'IntegrationEnvironment',
+        events: 'IntegrationEvents'):
+
+```
+
+At integration startup, the framework transfers control to
+`integration_ledger_event_log_main` to allow the integration to
+initialize itself. The first argument, `env`, is a instance of
+`env_class` that contains the runtime values of the various `fields`
+that the user has specified for the integration through the DABL
+configuration UI. The second argument is an instance of
+`IntegrationEvents`, that represents the bulk of the integration API.
+`IntegrationEvents` contains a number of decorators that allow the
+entrypoint function to register handlers for various types of
+interesting events. These include various DAZL ledger events, HTTPS
+resources, timers, and internal message queues.
+
+For compelete examples of how the framework is used and integrations
+are constructed , please see the following repositories:
+
+* [Core Pack](https://github.com/digital-asset/daml-dit-integration-core)
+* [Coindesk](https://github.com/digital-asset/daml-dit-integration-coindesk)
+* [Slack](https://github.com/digital-asset/daml-dit-integration-slack)
+* [Exberry](https://github.com/digital-asset/daml-dit-integration-exberry)
+
+## A note on logging
+
+DABL integrations use the default Python logging package, and the
+framework provides specific support for controlling log level at
+runtime. To integrate properly with this logic, it is important that
+integrations use the `integration` logger. This logger is switched
+from `INFO` level to `DEBUG` level at a `DABL_LOG_LEVEL` setting of 10
+or above.
+
+```python
+import logging
+
+LOG = logging.getLogger('integration')
+```
+
+# Locally Running an integration DIT.
 
 Because they can be directly executed by a Python interpreter,
 integration DIT files can be run directly on a development machine
@@ -75,8 +156,9 @@ Available variables include the following:
 | `DABL_HEALTH_PORT` | 8089 | Port for Health/Status HTTP endpoint |
 | `DABL_INTEGRATION_METADATA_PATH` | 'int_args.yaml' | Path to local metadata file |
 | `DABL_INTEGRATION_TYPE_ID` | | Type ID for the specific integration within the DIT to run |
-| `DABL_LEDGER_ID` | 'cloudbox' | Ledger ID for local ledger |
+| `DABL_LEDGER_PARTY` | | Party identifier for network connection |
 | `DABL_LEDGER_URL` | `http://localhost:6865` | Address of local ledger gRPC API |
+| `DABL_LOG_LEVEL` | 0 | Log verbosity level - 0 up to 50. |
 
 Several of these are specifically of note for local development scenarios:
 
@@ -101,7 +183,7 @@ Several of these are specifically of note for local development scenarios:
   locally.) Inbound webhook resources defined with webhook handlers
   will also be exposed on this HTTP endpoint.
 
-### Integration Configuration Arguments
+## Integration Configuration Arguments
 
 Integrations accept their runtime configuration parameters through the
 metadata block of a configuration YAML file. This file is distinct
@@ -115,6 +197,12 @@ The format of the file is a single string/string map located under the
 the `field`s specified for the integration in the DIT file's
 `dabl-meta.yaml` and the values are the the configuration paramaters
 for the integration.
+
+Note that historically, integrations have accepted their run as party
+as a metadata attribute. This is visible below under the `runAs`
+key. However, to better align with the overall DABL automation
+architecture, this is now deprecated and integrations must take their
+party via the runtime environment variable `DAML_LEDGER_PARTY`.
 
 ```yaml
 "metadata":

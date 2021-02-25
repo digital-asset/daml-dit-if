@@ -15,7 +15,7 @@ from daml_dit_api import \
 def get_local_dabl_meta() -> 'Optional[str]':
     filename = f'pkg/{DABL_META_NAME}'
 
-    LOG.info('Attmpting to load DABL metadata from local file: %r', filename)
+    LOG.debug('Attmpting to load DABL metadata from local file: %r', filename)
 
     try:
         with open(filename, "r") as f:
@@ -28,7 +28,7 @@ def get_local_dabl_meta() -> 'Optional[str]':
 def get_pex_dabl_meta() -> 'Optional[str]':
     pex_filename = sys.argv[0]
 
-    LOG.info('Attmpting to load DABL metadata from PEX file: %r', pex_filename)
+    LOG.debug('Attmpting to load DABL metadata from PEX file: %r', pex_filename)
 
     try:
         with ZipFile(pex_filename) as zf:

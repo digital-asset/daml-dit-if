@@ -77,28 +77,30 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
         return handler_status
 
     async def worker(self):
-        LOG.info('Ledger context worker starting...')
+        LOG.debug('Ledger context worker starting.')
+
         while True:
-            LOG.info('...waiting for ledger event....')
-            pending_call = await self.pending_queue.get()
+            LOG.debug('Waiting for ledger event')
+
             try:
-                LOG.debug('...received ledger event: %r', pending_call)
+                pending_call = await self.pending_queue.get()
+                LOG.debug('Received ledger event')
                 await pending_call()
 
             except:  # noqa: E722
                 LOG.exception('Uncaught error in Ledger context worker loop.')
 
     async def process_sweeps(self):
-        LOG.info("Invoking init handlers")
+        LOG.debug("Invoking sweep initialization handlers")
 
         for init_handler in self.init_handlers:
             await init_handler()
 
         for (template, match, wfunc) in self.sweeps:
-            LOG.info('Processing sweep for %r', template)
+            LOG.debug('Processing sweep for %r', template)
 
             for (cid, cdata) in self.client.find_active(template, match).items():
-                LOG.info('Sweep contract: %r => %r', cid, cdata)
+                LOG.debug('Sweep contract: %r => %r', cid, cdata)
 
                 self.sweep_events += 1
 
@@ -107,12 +109,12 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
                     cid=cid,
                     cdata=cdata))
 
-        LOG.info("Sweeps processed, invoking ready handlers")
+        LOG.debug("Sweeps processed, invoking ready handlers")
 
         for ready_handler in self.ready_handlers:
             await ready_handler()
 
-        LOG.info("Done with ready handlers")
+        LOG.info("Done with ready handlers and sweeps")
 
     def _with_deferral(self, handler):
 
@@ -120,7 +122,8 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
             async def pending():
                 await handler(*args, **kwargs)
 
-            LOG.info("Deferring call: %r", pending)
+            LOG.debug("Deferring call: %r", pending)
+
             await self.pending_queue.put(pending)
 
         return wrapped

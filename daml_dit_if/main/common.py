@@ -40,10 +40,10 @@ def with_marshalling(mfn, fn):
 
 
 def normalize_integration_response(response):
-    LOG.info('Normalizing integration response: %r', response)
+    LOG.debug('Normalizing integration response: %r', response)
 
     if isinstance(response, IntegrationResponse):
-        LOG.info('Integration Response passthrough')
+        LOG.debug('Integration Response passthrough')
         return response
 
     commands = []
@@ -54,7 +54,7 @@ def normalize_integration_response(response):
     else:
         commands = []
 
-    LOG.info('Integration response with cmds: %r', commands)
+    LOG.debug('Integration response with ledger commands: %r', commands)
 
     return IntegrationResponse(commands=commands)
 
@@ -62,7 +62,7 @@ def normalize_integration_response(response):
 def as_handler_invocation(client: 'AIOPartyClient', inv_status: 'InvocationStatus', fn):
     @wraps(fn)
     async def wrapped(*args, **kwargs):
-        LOG.info('Invoking for invocation status: %r', inv_status)
+        LOG.debug('Invoking for invocation status: %r', inv_status)
         inv_status.use_count += 1
 
         response = None

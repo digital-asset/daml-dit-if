@@ -11,7 +11,7 @@ from aiohttp.typedefs import LooseHeaders
 from dazl.protocols.v0.json_ser_command import LedgerJSONEncoder
 
 
-from .log import LOG
+from .log import LOG, get_log_level, get_log_level_options, set_log_level
 from .config import Configuration
 from .integration_context import IntegrationContext
 
@@ -70,6 +70,25 @@ def _build_healthcheck_route(
         }
         return json_response(response_dict)
 
+    def _get_level(request: 'Request') -> 'Any':
+        return {
+            '_self': str(request.url),
+            'level': get_log_level(),
+            'level_options': get_log_level_options()
+        }
+
+    @routes.get('/log/level')
+    async def get_level(request: 'Request') -> 'Response':
+        return json_response(_get_level(request))
+
+    @routes.post('/log/level')
+    async def set_level(request: 'Request') -> 'Response':
+        body = await request.json()
+
+        set_log_level(int(body['level']))
+
+        return json_response(_get_level(request))
+
     return routes
 
 
@@ -85,10 +104,11 @@ async def start_web_endpoint(
     if integration_context.running and integration_context.webhook_context:
         app.add_routes(integration_context.webhook_context.route_table)
 
-    LOG.info('Opening a TCP socket...')
+    LOG.info('Starting web server on %s...', config.health_port)
     runner = AppRunner(app, access_log_format='%a %t "%r" %s %b')
     await runner.setup()
     site = TCPSite(runner, '0.0.0.0', config.health_port)
 
-    LOG.info('Started the web server on port %s.', config.health_port)
+    LOG.info('...Web server started')
+
     return ensure_future(site.start())

@@ -24,7 +24,7 @@ from daml_dit_api import \
 
 from .config import Configuration, get_default_config
 
-from .log import LOG, setup_default_logging
+from .log import FAIL, LOG, setup_default_logging, set_log_level
 
 from .web import start_web_endpoint
 
@@ -34,16 +34,11 @@ from .package_metadata_introspection import get_integration_types
 import pkg_resources
 
 
-def FAIL(message: str):
-    LOG.error(f'Fatal error: {message}')
-    sys.exit(9)
-
-
 def load_integration_spec(config: 'Configuration') -> 'Optional[IntegrationRuntimeSpec]':
     metadata_path = Path(config.integration_metadata_path)
 
     if metadata_path.exists():
-        LOG.info('Loading integration metadata from: %r', metadata_path)
+        LOG.debug('Loading integration metadata from: %r', metadata_path)
 
         yaml_metadata=yaml.safe_load(metadata_path.read_bytes())
 
@@ -68,13 +63,15 @@ async def run_dazl_network(network: 'Network'):
     """
     Run the dazl network, and make sure that fatal dazl errors terminate the application.
     """
-    LOG.info('Starting dazl network...')
 
-    # noinspection PyBroadException
     try:
+        LOG.info('Starting dazl network...')
+
         await network.aio_run()
     except:  # noqa
-        FAIL('The main dazl coroutine died with an exception')
+        LOG.exception('The main dazl coroutine died with an exception')
+
+    FAIL('Execution cannot continue without dazl coroutine.')
 
 
 async def _aio_main(
@@ -87,7 +84,8 @@ async def _aio_main(
     dazl_coro = ensure_future(run_dazl_network(network))
 
     integration_context = \
-        IntegrationContext(network, integration_type, type_id, integration_spec)
+        IntegrationContext(
+            network, config.run_as_party, integration_type, type_id, integration_spec)
 
     await integration_context.safe_load_and_start()
 
@@ -101,7 +99,7 @@ async def _aio_main(
 
 
 def main():
-    setup_default_logging(level=logging.DEBUG)
+    setup_default_logging()
 
     LOG.info('Initializing dabl-integration...')
 
@@ -109,8 +107,11 @@ def main():
     # increase the standard limit to be able to handle those.
     sys.setrecursionlimit(10000)
 
-    integration_types = get_integration_types()
     config = get_default_config()
+
+    set_log_level(config.log_level)
+
+    integration_types = get_integration_types()
     integration_spec = load_integration_spec(config)
 
     type_id = config.type_id
@@ -136,7 +137,8 @@ def main():
         LOG.info('Running integration type: %r...', type_id)
 
         loop = get_event_loop()
-        loop.run_until_complete(_aio_main(integration_type, config, type_id, integration_spec))
+        loop.run_until_complete(
+            _aio_main(integration_type, config, type_id, integration_spec))
 
     else:
         FAIL('No metadata file. Terminating without running')

@@ -56,23 +56,25 @@ class IntegrationTimeContext(IntegrationTimeEvents):
         return decorator
 
     async def worker(self):
-        LOG.info('Time context worker starting...')
+        LOG.debug('Time context worker starting.')
+
         while True:
-            LOG.debug('...waiting for time event.')
-            fn = await self.queue.get()
+            LOG.debug('Waiting for time event.')
+
             try:
-                LOG.debug('...received time event...')
+                fn = await self.queue.get()
+                LOG.info('Received time event.')
                 commands = await fn()
 
                 if commands:
-                    LOG.debug('Submitting ledger commands: %r', commands)
+                    LOG.info('Submitting time event ledger commands: %r', commands)
                     await self.client.submit(commands)
 
             except:  # noqa: E722
                 LOG.exception('Uncaught error in time context worker loop')
 
     async def wait_loop(self, seconds, fn):
-        LOG.info('Entering timer wait loop for %r second interval (fn: %r)',
+        LOG.debug('Entering timer wait loop for %r second interval (fn: %r)',
                  seconds, fn)
 
         try:
