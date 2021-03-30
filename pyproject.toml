@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "daml-dit-if"
-version = "0.4.0"
+version = "0.4.1"
 description = "DABL Integration Framework"
 authors = ["Mike Schaeffer <mike.schaeffer@digitalasset.com>"]
 readme = "README.md"
@@ -11,7 +11,7 @@ keywords = ["daml", "blockchain", "dlt", "distributed ledger", "digital asset"]
 python = ">=3.7, <4.0"
 aiohttp = "*"
 dacite = "*"
-dazl = "7.3.2"
+dazl = "7.3.7"
 pyyaml = "5.4.1"
 yarl = "1.5.1"
 multidict = "4.7.6"
