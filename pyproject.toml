@@ -11,13 +11,13 @@ keywords = ["daml", "blockchain", "dlt", "distributed ledger", "digital asset"]
 python = ">=3.7, <4.0"
 aiohttp = "*"
 dacite = "*"
-dazl = "7.3.7"
+dazl = "7.4.0"
 pyyaml = "5.4.1"
 yarl = "1.5.1"
 multidict = "4.7.6"
 idna = "2.10"
 chardet = "3.0.4"
-daml-dit-api = "0.3.3"
+daml-dit-api = "0.4.1"
 
 [tool.poetry.dev-dependencies]
 mypy = "*"

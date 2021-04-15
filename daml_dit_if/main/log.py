@@ -1,7 +1,7 @@
 import logging
 import sys
 import time
-
+import typing
 
 # The integration framework has its own internal concept of logging
 # level that is mapped onto the levels of several distinct channels
@@ -15,7 +15,7 @@ _level = 0
 LOG = logging.getLogger('dabl-if')
 
 
-def FAIL(message: str):
+def FAIL(message: str) -> typing.NoReturn:
     global _level
 
     msg = f'\n\n\n=== FATAL ERROR: {message} ==='

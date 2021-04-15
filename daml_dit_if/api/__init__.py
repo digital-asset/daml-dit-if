@@ -3,16 +3,18 @@ from dataclasses import dataclass, field
 
 from typing import Any, Callable, Optional, Sequence
 
-
 from aiohttp.web import Response
 
 from dazl import Command, ContractData, ContractId
-from dazl.model.core import ContractMatch
+from dazl.query import ContractMatch
+
+from daml_dit_api import DamlModelInfo
+
+from .common import ensure_package_id
 
 
 def _empty_commands() -> 'Sequence[Command]':
     return list()
-
 
 @dataclass(frozen=True)
 class IntegrationResponse:
@@ -255,7 +257,10 @@ class IntegrationEvents:
 class IntegrationEnvironment:
     queue: 'IntegrationQueueSink'
     party: str
+    daml_model: 'Optional[DamlModelInfo]'
 
+    def tid(self, template_id: str) -> str:
+        return ensure_package_id(self.daml_model, template_id)
 
 IntegrationEntryPoint = \
     Callable[[IntegrationEnvironment, IntegrationEvents], None]

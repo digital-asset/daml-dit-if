@@ -35,6 +35,7 @@ def env(var: str, default: 'Optional[str]' = None) -> str:
         return default
     else:
         FAIL(f'Missing required environment variable: {var}')
+        return ''  # unreached
 
 
 def envint(var: str, default: 'Optional[int]' = None) -> int:
@@ -44,7 +45,6 @@ def envint(var: str, default: 'Optional[int]' = None) -> int:
         return int(val)
     except ValueError:
         FAIL(f'Invalid integer {val} in environment variable: {var}')
-
 
 def get_default_config() -> 'Configuration':
     config = Configuration(
