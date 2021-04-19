@@ -29,6 +29,10 @@ from .common import \
 
 from .log import LOG
 
+from .integration_deferral_queue import \
+    IntegrationDeferralQueue
+
+
 Sweep = Tuple[Any,
               Optional[ContractMatch],
               Callable[[ContractCreateEvent], EventHandlerResponse]]
@@ -52,14 +56,13 @@ class IntegrationLedgerStatus:
 
 
 class IntegrationLedgerContext(IntegrationLedgerEvents):
-    def __init__(self, client: 'AIOPartyClient', daml_model: 'Optional[DamlModelInfo]'):
-        self.pending_queue = \
-            asyncio.Queue()  # type: asyncio.Queue[PendingHandlerCall]
+    def __init__(self, queue: 'IntegrationDeferralQueue', client: 'AIOPartyClient', daml_model: 'Optional[DamlModelInfo]'):
+        self.queue = queue
 
         self.client = client
         self.sweep_events = 0
         self.handlers = []  # type: List[LedgerHandlerStatus]
-        self.sweeps = []  # type: List[Sweep]
+        self.sweeps = [] # type: List[Sweep]
         self.init_handlers = []  # type: List[PendingHandlerCall]
         self.ready_handlers = []  # type: List[PendingHandlerCall]
         self.daml_model = daml_model
@@ -84,20 +87,6 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
         self.handlers.append(handler_status)
 
         return handler_status
-
-    async def worker(self):
-        LOG.debug('Ledger context worker starting.')
-
-        while True:
-            LOG.debug('Waiting for ledger event')
-
-            try:
-                pending_call = await self.pending_queue.get()
-                LOG.debug('Received ledger event')
-                await pending_call()
-
-            except:  # noqa: E722
-                LOG.exception('Uncaught error in Ledger context worker loop.')
 
     async def process_sweeps(self):
         LOG.debug("Invoking sweep initialization handlers")
@@ -133,7 +122,7 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
 
             LOG.debug("Deferring call: %r", pending)
 
-            await self.pending_queue.put(pending)
+            await self.queue.put(pending)
 
         return wrapped
 
@@ -226,13 +215,13 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
             self, template: Any, match: 'Optional[ContractMatch]' = None,
             sweep: bool = True, flow: bool = True, package_defaulting: bool = True):
 
-        LOG.info('Registering contract_created: %r (match: %r, sweep/flow: %r/%r)',
-                 template, match, sweep, flow)
-
         if package_defaulting:
             ftemplate = ensure_package_id(self.daml_model, template)
         else:
             ftemplate = template
+
+        LOG.info('Registering contract_created: %r (match: %r, sweep/flow: %r/%r)',
+                 ftemplate, match, sweep, flow)
 
         handler_status = \
             self._notice_handler(f'Contract Create - {ftemplate}', sweep, flow)
@@ -258,12 +247,12 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
     def contract_archived(self, template: Any, match: 'Optional[ContractMatch]' = None,
                           package_defaulting: bool = True):
 
-        LOG.info('Registering contract_archived: %r (match: %r)', template, match)
-
         if package_defaulting:
             ftemplate = ensure_package_id(self.daml_model, template)
         else:
             ftemplate = template
+
+        LOG.info('Registering contract_archived: %r (match: %r)', ftemplate, match)
 
         handler_status = \
             self._notice_handler(f'Contract Archive - {ftemplate}', False, True)
@@ -288,9 +277,6 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
 
     def get_status(self) -> 'IntegrationLedgerStatus':
         return IntegrationLedgerStatus(
-            pending_calls=self.pending_queue.qsize(),
+            pending_calls=self.queue.qsize(),
             sweep_events=self.sweep_events,
             event_handlers=self.handlers)
-
-    async def start(self):
-        return asyncio.create_task(self.worker())

@@ -14,6 +14,9 @@ from .common import \
     without_return_value, \
     as_handler_invocation
 
+from .integration_deferral_queue import \
+    IntegrationDeferralQueue
+
 
 @dataclass
 class QueueEventStatus(InvocationStatus):
@@ -24,15 +27,13 @@ class QueueEventStatus(InvocationStatus):
 class IntegrationQueueStatus:
     queues: 'Sequence[QueueEventStatus]'
 
-
 IntegrationQueueHandler = Callable[[Any], Awaitable[Sequence[Command]]]
 
 IntegrationQueueDict = Dict[str, Tuple[IntegrationQueueHandler, QueueEventStatus]]
 
 class IntegrationQueueSinkImpl(IntegrationQueueSink):
 
-    def __init__(self,
-                 queues: IntegrationQueueDict):
+    def __init__(self, queues: IntegrationQueueDict):
         self.queues = queues
 
     async def put(self, message: 'Any', queue_name: 'str' = 'default'):
@@ -51,9 +52,8 @@ class IntegrationQueueSinkImpl(IntegrationQueueSink):
 
 class IntegrationQueueContext(IntegrationQueueEvents):
 
-    def __init__(self, client: 'AIOPartyClient'):
-        self.queue = \
-            asyncio.Queue(maxsize=1)  # type: asyncio.Queue[IntegrationQueueHandler]
+    def __init__(self, queue: 'IntegrationDeferralQueue', client: 'AIOPartyClient'):
+        self.queue = queue
         self.client = client
         self.queues = {}  # type: IntegrationQueueDict
         self.sink = IntegrationQueueSinkImpl(self.queues)
@@ -87,29 +87,6 @@ class IntegrationQueueContext(IntegrationQueueEvents):
 
             return wrapped
         return decorator
-
-    async def worker(self):
-        LOG.debug('Queue context worker starting.')
-
-        while True:
-            LOG.debug('Waiting for queue event.')
-
-            try:
-                fn = await self.queue.get()
-                LOG.debug('Received queue event.')
-                commands = await fn()
-
-                if commands:
-                    LOG.info('Submitting queue event ledger commands: %r', commands)
-                    await self.client.submit(commands)
-
-            except:  # noqa: E722
-                LOG.exception('Uncaught error in queue context worker loop')
-
-    async def start(self):
-        worker_task = asyncio.create_task(self.worker())
-
-        asyncio.gather(worker_task)
 
     def get_status(self) -> 'IntegrationQueueStatus':
         return IntegrationQueueStatus(
