@@ -93,10 +93,11 @@ async def _aio_main(
 
     integration_coro = integration_context.get_coro()
 
-    LOG.info('dabl-integration is now ready.')
-
-    await gather(web_coro, dazl_coro, integration_coro)
-
+    if integration_coro:
+        LOG.info('Integration is now ready. Starting main loop.')
+        await gather(web_coro, dazl_coro, integration_coro)
+    else:
+        LOG.error('Error initializing integration. Shutting down.')
 
 def main():
     setup_default_logging()

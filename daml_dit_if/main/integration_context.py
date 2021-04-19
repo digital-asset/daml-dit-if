@@ -41,6 +41,9 @@ from .integration_webhook_context import \
 from .integration_ledger_context import \
     IntegrationLedgerContext, IntegrationLedgerStatus
 
+from .package_metadata_introspection import \
+    get_daml_model_info
+
 from .common import \
     InvocationStatus, \
     without_return_value, \
@@ -180,7 +183,13 @@ class IntegrationContext:
     async def _load_and_start(self):
         metadata = self.integration_spec.metadata
 
+        LOG.info('Starting ledger client for party: %r', self.run_as_party)
+
         client = self.network.aio_party(self.run_as_party)
+
+        await client.ready()
+
+        LOG.info('Ledger client ready')
 
         env_class = self.get_integration_env_class(self.integration_type)
         entry_fn = self.get_integration_entrypoint(self.integration_type)
@@ -189,9 +198,11 @@ class IntegrationContext:
 
         LOG.info("Starting integration with metadata: %r", metadata)
 
+        daml_model = get_daml_model_info();
+
         self.queue_context = IntegrationQueueContext(client)
         self.time_context = IntegrationTimeContext(client)
-        self.ledger_context = IntegrationLedgerContext(client)
+        self.ledger_context = IntegrationLedgerContext(client, daml_model)
         self.webhook_context = IntegrationWebhookContext(client)
 
         events = IntegrationEvents(
@@ -203,7 +214,8 @@ class IntegrationContext:
         integration_env_data = {
             **metadata,
             'queue': self.queue_context.sink,
-            'party': self.run_as_party
+            'party': self.run_as_party,
+            'daml_model': daml_model
             }
 
         integration_env = from_dict(
@@ -216,8 +228,6 @@ class IntegrationContext:
         )
 
         user_coro = entry_fn(integration_env, events)
-
-        await client.ready()
 
         await self.ledger_context.process_sweeps()
 

@@ -9,6 +9,7 @@ from zipfile import ZipFile
 
 from daml_dit_api import \
     DABL_META_NAME, \
+    DamlModelInfo, \
     PackageMetadata, \
     IntegrationTypeInfo
 
@@ -61,6 +62,8 @@ def package_meta_integration_types(
     return {itype.id: itype for itype in package_itypes}
 
 
-def get_integration_types() -> 'Dict[str, IntegrationTypeInfo]':
+def get_daml_model_info() -> 'Optional[DamlModelInfo]':
+    return get_package_metadata().daml_model
 
+def get_integration_types() -> 'Dict[str, IntegrationTypeInfo]':
     return package_meta_integration_types(get_package_metadata())

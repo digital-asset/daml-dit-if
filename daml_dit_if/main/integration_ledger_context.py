@@ -7,7 +7,14 @@ from dazl.model.core import ContractMatch
 from dazl.model.reading import ContractCreateEvent
 from dazl.model.writing import EventHandlerResponse
 
+from dazl.damlast.lookup import parse_type_con_name
+from dazl.damlast.util import package_ref
+
+from daml_dit_api import \
+    DamlModelInfo
+
 from ..api import \
+    ensure_package_id, \
     IntegrationLedgerEvents, \
     IntegrationLedgerContractCreateEvent, \
     IntegrationLedgerContractArchiveEvent, \
@@ -21,7 +28,6 @@ from .common import \
     with_marshalling
 
 from .log import LOG
-
 
 Sweep = Tuple[Any,
               Optional[ContractMatch],
@@ -46,7 +52,7 @@ class IntegrationLedgerStatus:
 
 
 class IntegrationLedgerContext(IntegrationLedgerEvents):
-    def __init__(self, client: 'AIOPartyClient'):
+    def __init__(self, client: 'AIOPartyClient', daml_model: 'Optional[DamlModelInfo]'):
         self.pending_queue = \
             asyncio.Queue()  # type: asyncio.Queue[PendingHandlerCall]
 
@@ -56,6 +62,9 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
         self.sweeps = []  # type: List[Sweep]
         self.init_handlers = []  # type: List[PendingHandlerCall]
         self.ready_handlers = []  # type: List[PendingHandlerCall]
+        self.daml_model = daml_model
+
+        LOG.info('Environment DAML Model: %r', self.daml_model)
 
     def _notice_handler(
             self, description: str,
@@ -215,10 +224,18 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
 
     def contract_created(
             self, template: Any, match: 'Optional[ContractMatch]' = None,
-            sweep: bool = True, flow: bool = True):
+            sweep: bool = True, flow: bool = True, package_defaulting: bool = True):
+
+        LOG.info('Registering contract_created: %r (match: %r, sweep/flow: %r/%r)',
+                 template, match, sweep, flow)
+
+        if package_defaulting:
+            ftemplate = ensure_package_id(self.daml_model, template)
+        else:
+            ftemplate = template
 
         handler_status = \
-            self._notice_handler(f'Contract Create - {template}', sweep, flow)
+            self._notice_handler(f'Contract Create - {ftemplate}', sweep, flow)
 
         def wrap_method(func):
             wfunc = self._with_deferral(
@@ -227,21 +244,29 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
                         self.client, handler_status, func)))
 
             if sweep:
-                self.sweeps.append((template, match, wfunc))
+                self.sweeps.append((ftemplate, match, wfunc))
 
             handler = with_marshalling(self._to_int_create_event, wfunc)
 
             if flow:
-                self.client.add_ledger_created(template, match=match, handler=handler)
+                self.client.add_ledger_created(ftemplate, match=match, handler=handler)
 
             return handler
 
         return wrap_method
 
-    def contract_archived(self, template: Any, match: 'Optional[ContractMatch]' = None):
+    def contract_archived(self, template: Any, match: 'Optional[ContractMatch]' = None,
+                          package_defaulting: bool = True):
+
+        LOG.info('Registering contract_archived: %r (match: %r)', template, match)
+
+        if package_defaulting:
+            ftemplate = ensure_package_id(self.daml_model, template)
+        else:
+            ftemplate = template
 
         handler_status = \
-            self._notice_handler(f'Contract Archive - {template}', False, True)
+            self._notice_handler(f'Contract Archive - {ftemplate}', False, True)
 
         def to_int_event(dazl_event):
             return IntegrationLedgerContractArchiveEvent(
@@ -255,7 +280,7 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
                         as_handler_invocation(
                             self.client, handler_status, func))))
 
-            self.client.add_ledger_archived(template, match=match, handler=handler)
+            self.client.add_ledger_archived(ftemplate, match=match, handler=handler)
 
             return handler
 
