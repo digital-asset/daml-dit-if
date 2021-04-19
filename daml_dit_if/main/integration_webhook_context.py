@@ -1,9 +1,11 @@
 from dataclasses import dataclass
-from typing import Optional, Sequence
+from typing import List, Optional, Sequence
 from functools import wraps
 
 from aiohttp import web
 from aiohttp.web import RouteTableDef
+
+from dazl import AIOPartyClient
 
 from .common import \
     InvocationStatus, \
@@ -14,6 +16,8 @@ from ..api import IntegrationWebhookRoutes
 
 from .log import LOG
 
+from .integration_deferral_queue import \
+    IntegrationDeferralQueue
 
 def empty_success_response() -> 'web.HTTPOk':
     return web.HTTPOk()
@@ -33,7 +37,7 @@ class IntegrationWebhookStatus:
 
 class IntegrationWebhookContext(IntegrationWebhookRoutes):
 
-    def __init__(self, client):
+    def __init__(self, queue: 'IntegrationDeferralQueue', client: 'AIOPartyClient'):
         self.route_table = RouteTableDef()
         self.client = client
 

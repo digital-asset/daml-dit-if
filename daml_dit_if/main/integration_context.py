@@ -29,6 +29,9 @@ from ..api import \
     IntegrationEnvironment, \
     IntegrationEvents
 
+from .integration_deferral_queue import \
+    IntegrationDeferralQueue
+
 from .integration_queue_context import \
     IntegrationQueueContext, IntegrationQueueStatus
 
@@ -134,6 +137,8 @@ class IntegrationContext:
         self.error_message = None  # type: Optional[str]
         self.error_time = None  # type: Optional[datetime]
 
+        self.queue = IntegrationDeferralQueue()
+
         self.queue_context = None  # type: Optional[IntegrationQueueContext]
         self.time_context = None  # type: Optional[IntegrationTimeContext]
         self.webhook_context = None  # type: Optional[IntegrationWebhookContext]
@@ -200,10 +205,10 @@ class IntegrationContext:
 
         daml_model = get_daml_model_info();
 
-        self.queue_context = IntegrationQueueContext(client)
-        self.time_context = IntegrationTimeContext(client)
-        self.ledger_context = IntegrationLedgerContext(client, daml_model)
-        self.webhook_context = IntegrationWebhookContext(client)
+        self.queue_context = IntegrationQueueContext(self.queue, client)
+        self.time_context = IntegrationTimeContext(self.queue, client)
+        self.ledger_context = IntegrationLedgerContext(self.queue, client, daml_model)
+        self.webhook_context = IntegrationWebhookContext(self.queue, client)
 
         events = IntegrationEvents(
             queue=self.queue_context,
@@ -234,9 +239,8 @@ class IntegrationContext:
         self.running = True
 
         int_coros = [
-            self.queue_context.start(),
+            self.queue.start(),
             self.time_context.start(),
-            self.ledger_context.start()
         ]
 
         if user_coro:
