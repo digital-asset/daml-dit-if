@@ -15,6 +15,7 @@ from .log import LOG
 @dataclass
 class InvocationStatus:
     index: int
+    label: 'Optional[str]'
     command_count: int
     use_count: int
     error_count: int

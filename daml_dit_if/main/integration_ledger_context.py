@@ -43,16 +43,9 @@ PendingHandlerCall = Callable[[], None]
 
 @dataclass
 class LedgerHandlerStatus(InvocationStatus):
-    description: str
+    template_id: 'Optional[str]'
     sweep_enabled: bool
     flow_enabled: bool
-
-
-@dataclass
-class IntegrationLedgerStatus:
-    pending_calls: int
-    sweep_events: int
-    event_handlers: 'Sequence[LedgerHandlerStatus]'
 
 
 class IntegrationLedgerContext(IntegrationLedgerEvents):
@@ -60,7 +53,6 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
         self.queue = queue
 
         self.client = client
-        self.sweep_events = 0
         self.handlers = []  # type: List[LedgerHandlerStatus]
         self.sweeps = [] # type: List[Sweep]
         self.init_handlers = []  # type: List[PendingHandlerCall]
@@ -70,13 +62,14 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
         LOG.info('Environment DAML Model: %r', self.daml_model)
 
     def _notice_handler(
-            self, description: str,
+            self, label: str, template_id: 'Optional[str]',
             sweep_enabled: bool, flow_enabled: bool) -> 'LedgerHandlerStatus':
 
         handler_status = \
             LedgerHandlerStatus(
                 index=len(self.handlers),
-                description=description,
+                label=label,
+                template_id=template_id,
                 command_count=0,
                 use_count=0,
                 error_count=0,
@@ -100,7 +93,6 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
             for (cid, cdata) in self.client.find_active(template, match).items():
                 LOG.debug('Sweep contract: %r => %r', cid, cdata)
 
-                self.sweep_events += 1
 
                 await wfunc(IntegrationLedgerContractCreateEvent(
                     initial=True,
@@ -114,7 +106,7 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
 
         LOG.info("Done with ready handlers and sweeps")
 
-    def _with_deferral(self, handler):
+    def _with_deferral(self, status, handler):
 
         async def wrapped(*args, **kwargs):
             async def pending():
@@ -122,7 +114,7 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
 
             LOG.debug("Deferring call: %r", pending)
 
-            await self.queue.put(pending)
+            await self.queue.put(pending, status)
 
         return wrapped
 
@@ -133,10 +125,11 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
             cdata=dazl_event.cdata)
 
     def ledger_init(self):
-        handler_status = self._notice_handler('Ledger Init', False, True)
+        handler_status = self._notice_handler('Ledger Init', None, False, True)
 
         def wrap_method(func):
             handler = self._with_deferral(
+                handler_status,
                 without_return_value(
                     as_handler_invocation(
                         self.client, handler_status, func)))
@@ -148,10 +141,11 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
         return wrap_method
 
     def ledger_ready(self):
-        handler_status = self._notice_handler('Ledger Ready', False, True)
+        handler_status = self._notice_handler('Ledger Ready', None, False, True)
 
         def wrap_method(func):
             handler = self._with_deferral(
+                handler_status,
                 without_return_value(
                     as_handler_invocation(
                         self.client, handler_status, func)))
@@ -163,7 +157,7 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
         return wrap_method
 
     def transaction_start(self):
-        handler_status = self._notice_handler('Transaction Start', False, True)
+        handler_status = self._notice_handler('Transaction Start', None, False, True)
 
         def to_int_event(dazl_event):
             return IntegrationLedgerTransactionEndEvent(
@@ -174,6 +168,7 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
 
         def wrap_method(func):
             handler = self._with_deferral(
+                handler_status,
                 with_marshalling(
                     to_int_event,
                     without_return_value(
@@ -188,7 +183,7 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
 
     def transaction_end(self):
         handler_status = \
-            self._notice_handler('Transaction End', False, True)
+            self._notice_handler('Transaction End', None, False, True)
 
         def to_int_event(dazl_event):
             return IntegrationLedgerTransactionEndEvent(
@@ -199,6 +194,7 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
 
         def wrap_method(func):
             handler = self._with_deferral(
+                handler_status,
                 with_marshalling(
                     to_int_event,
                     without_return_value(
@@ -224,10 +220,11 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
                  ftemplate, match, sweep, flow)
 
         handler_status = \
-            self._notice_handler(f'Contract Create - {ftemplate}', sweep, flow)
+            self._notice_handler(f'Contract Create', ftemplate, sweep, flow)
 
         def wrap_method(func):
             wfunc = self._with_deferral(
+                handler_status,
                 without_return_value(
                     as_handler_invocation(
                         self.client, handler_status, func)))
@@ -255,7 +252,7 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
         LOG.info('Registering contract_archived: %r (match: %r)', ftemplate, match)
 
         handler_status = \
-            self._notice_handler(f'Contract Archive - {ftemplate}', False, True)
+            self._notice_handler(f'Contract Archive', ftemplate, False, True)
 
         def to_int_event(dazl_event):
             return IntegrationLedgerContractArchiveEvent(
@@ -263,6 +260,7 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
 
         def wrap_method(func):
             handler = self._with_deferral(
+                handler_status,
                 with_marshalling(
                     to_int_event,
                     without_return_value(
@@ -275,8 +273,5 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
 
         return wrap_method
 
-    def get_status(self) -> 'IntegrationLedgerStatus':
-        return IntegrationLedgerStatus(
-            pending_calls=self.queue.qsize(),
-            sweep_events=self.sweep_events,
-            event_handlers=self.handlers)
+    def get_status(self) -> 'Sequence[LedgerHandlerStatus]':
+        return self.handlers

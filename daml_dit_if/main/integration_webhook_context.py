@@ -27,12 +27,6 @@ def empty_success_response() -> 'web.HTTPOk':
 class WebhookRouteStatus(InvocationStatus):
     url_path: str
     method: str
-    label: 'Optional[str]'
-
-
-@dataclass
-class IntegrationWebhookStatus:
-    routes: 'Sequence[WebhookRouteStatus]'
 
 
 class IntegrationWebhookContext(IntegrationWebhookRoutes):
@@ -107,6 +101,5 @@ class IntegrationWebhookContext(IntegrationWebhookRoutes):
 
         return wrap_method
 
-    def get_status(self) -> 'IntegrationWebhookStatus':
-        return IntegrationWebhookStatus(
-            routes=self.routes)
+    def get_status(self) -> 'Sequence[WebhookRouteStatus]':
+        return self.routes
