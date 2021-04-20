@@ -18,18 +18,9 @@ from .integration_deferral_queue import \
     IntegrationDeferralQueue
 
 
-@dataclass
-class QueueEventStatus(InvocationStatus):
-    queue_name: 'str'
-
-
-@dataclass
-class IntegrationQueueStatus:
-    queues: 'Sequence[QueueEventStatus]'
-
 IntegrationQueueHandler = Callable[[Any], Awaitable[Sequence[Command]]]
 
-IntegrationQueueDict = Dict[str, Tuple[IntegrationQueueHandler, QueueEventStatus]]
+IntegrationQueueDict = Dict[str, Tuple[IntegrationQueueHandler, InvocationStatus]]
 
 class IntegrationQueueSinkImpl(IntegrationQueueSink):
 
@@ -60,9 +51,9 @@ class IntegrationQueueContext(IntegrationQueueEvents):
 
     def message(self, queue_name: 'str' = 'default'):
         def decorator(fn: 'IntegrationQueueHandler'):
-            status = QueueEventStatus(
+            status = InvocationStatus(
                 index=len(self.queues),
-                queue_name=queue_name,
+                label=queue_name,
                 command_count=0,
                 use_count=0,
                 error_count=0,
@@ -81,13 +72,12 @@ class IntegrationQueueContext(IntegrationQueueEvents):
                 async def doit():
                     await wrapped(message)
 
-                await self.queue.put(doit)
+                await self.queue.put(doit, status)
 
             self.queues[queue_name]=(enqueue_wrapped, status)
 
             return wrapped
         return decorator
 
-    def get_status(self) -> 'IntegrationQueueStatus':
-        return IntegrationQueueStatus(
-            queues=[status for (_, status) in self.queues.values()])
+    def get_status(self) -> 'Sequence[InvocationStatus]':
+        return [status for (_, status) in self.queues.values()]

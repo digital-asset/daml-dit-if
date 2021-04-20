@@ -19,16 +19,6 @@ from .integration_deferral_queue import \
     IntegrationDeferralQueue
 
 
-@dataclass
-class TimerEventStatus(InvocationStatus):
-    label: 'Optional[str]'
-
-
-@dataclass
-class IntegrationTimeStatus:
-    timers: 'Sequence[TimerEventStatus]'
-
-
 IntegrationTimerHandler = Callable[[], None]
 
 
@@ -37,13 +27,13 @@ class IntegrationTimeContext(IntegrationTimeEvents):
     def __init__(self, queue: 'IntegrationDeferralQueue', client: 'AIOPartyClient'):
         self.queue = queue
         self.client = client
-        self.intervals = []  # type: List[Tuple[int, IntegrationTimerHandler, TimerEventStatus]]
+        self.intervals = []  # type: List[Tuple[int, IntegrationTimerHandler,InvocationStatus]]
 
     def periodic_interval(self, seconds, label: 'Optional[str]' = None):
         def decorator(fn: 'IntegrationTimerHandler'):
-            status = TimerEventStatus(
+            status = InvocationStatus(
                 index=len(self.intervals),
-                label=label,
+                label=f'{label} ({seconds}s)',
                 command_count=0,
                 use_count=0,
                 error_count=0,
@@ -58,7 +48,7 @@ class IntegrationTimeContext(IntegrationTimeEvents):
             return wrapped
         return decorator
 
-    async def wait_loop(self, seconds, fn):
+    async def wait_loop(self, seconds, fn, status):
         LOG.debug('Entering timer wait loop for %r second interval (fn: %r)',
                  seconds, fn)
 
@@ -66,16 +56,15 @@ class IntegrationTimeContext(IntegrationTimeEvents):
             while True:
                 LOG.debug('Wait loop waiting %r seconds...', seconds)
                 await asyncio.sleep(seconds)
-                await self.queue.put(fn)
+                await self.queue.put(fn, status)
         except:  # noqa: E722
             LOG.exception('Unexpected error in wait loop (%r, %r).', seconds, fn)
 
     async def start(self):
         asyncio.gather(*[
-            asyncio.create_task(self.wait_loop(seconds, fn))
+            asyncio.create_task(self.wait_loop(seconds, fn, status))
             for (seconds, fn, status)
             in self.intervals])
 
-    def get_status(self) -> 'IntegrationTimeStatus':
-        return IntegrationTimeStatus(
-            timers=[status for (_, _, status) in self.intervals])
+    def get_status(self) -> 'Sequence[InvocationStatus]':
+        return [status for (_, _, status) in self.intervals]

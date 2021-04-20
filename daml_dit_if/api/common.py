@@ -7,6 +7,10 @@ from daml_dit_api import DamlModelInfo
 
 
 def ensure_package_id(daml_model: 'Optional[DamlModelInfo]', template: str) -> str:
+
+    if template == '*':
+        return template
+
     package = package_ref(parse_type_con_name(template))
 
     if package != '*':
