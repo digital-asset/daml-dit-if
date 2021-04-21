@@ -42,6 +42,10 @@ def get_log_level():
     return _level
 
 
+def is_debug_enabled():
+    return get_log_level() >= 20
+
+
 def set_log_level(level):
     global _level
 

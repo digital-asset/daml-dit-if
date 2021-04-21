@@ -33,16 +33,16 @@ from .integration_deferral_queue import \
     IntegrationDeferralQueue
 
 from .integration_queue_context import \
-    IntegrationQueueContext, IntegrationQueueStatus
+    IntegrationQueueContext
 
 from .integration_time_context import \
-    IntegrationTimeContext, IntegrationTimeStatus
+    IntegrationTimeContext
 
 from .integration_webhook_context import \
-    IntegrationWebhookContext, IntegrationWebhookStatus
+    IntegrationWebhookContext, WebhookRouteStatus
 
 from .integration_ledger_context import \
-    IntegrationLedgerContext, IntegrationLedgerStatus
+    IntegrationLedgerContext, LedgerHandlerStatus
 
 from .package_metadata_introspection import \
     get_daml_model_info
@@ -64,10 +64,11 @@ class IntegrationStatus:
     start_time: datetime
     error_message: 'Optional[str]'
     error_time: 'Optional[datetime]'
-    webhooks: 'Optional[IntegrationWebhookStatus]'
-    ledger: 'Optional[IntegrationLedgerStatus]'
-    timers: 'Optional[IntegrationTimeStatus]'
-
+    pending_events: int
+    webhooks: 'Sequence[WebhookRouteStatus]'
+    ledger_events: 'Sequence[LedgerHandlerStatus]'
+    timers: 'Sequence[InvocationStatus]'
+    queues: 'Sequence[InvocationStatus]'
 
 
 def normalize_metadata_field(field_value, field_type_info):
@@ -254,9 +255,11 @@ class IntegrationContext:
             start_time=self.start_time,
             error_message=self.error_message,
             error_time=self.error_time,
-            webhooks=self.webhook_context.get_status() if self.webhook_context else None,
-            ledger=self.ledger_context.get_status() if self.ledger_context else None,
-            timers=self.time_context.get_status() if self.time_context else None)
+            pending_events=self.queue.qsize(),
+            webhooks=self.webhook_context.get_status() if self.webhook_context else [],
+            ledger_events=self.ledger_context.get_status() if self.ledger_context else [],
+            timers=self.time_context.get_status() if self.time_context else [],
+            queues=self.queue_context.get_status() if self.queue_context else [])
 
     async def safe_load_and_start(self):
         try:
