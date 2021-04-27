@@ -64,36 +64,33 @@ def _build_control_routes(
         integration_context: 'IntegrationContext') -> 'RouteTableDef':
     routes = RouteTableDef()
 
+    def _get_status(request: 'Request'):
+        return {
+            **asdict(integration_context.get_status()),
+            'log_level': get_log_level(),
+            'log_level_options': get_log_level_options(),
+            '_self': str(request.url)
+        }
+
     @routes.get('/healthz')
     async def get_container_health(request: 'Request') -> 'Response':
         response_dict = {
-            **asdict(integration_context.get_status()),
+            **_get_status(request),
             '_self': str(request.url)
         }
         return json_response(response_dict)
 
     @routes.get('/status')
     async def get_container_status(request: 'Request') -> 'Response':
-        return json_response(asdict(integration_context.get_status()))
+        return json_response(_get_status(request))
 
-    def _get_level(request: 'Request') -> 'Any':
-        return {
-            '_self': str(request.url),
-            'level': get_log_level(),
-            'level_options': get_log_level_options()
-        }
-
-    @routes.get('/log/level')
-    async def get_level(request: 'Request') -> 'Response':
-        return json_response(_get_level(request))
-
-    @routes.post('/log/level')
+    @routes.post('/log-level')
     async def set_level(request: 'Request') -> 'Response':
         body = await request.json()
 
-        set_log_level(int(body['level']))
+        set_log_level(int(body['log_level']))
 
-        return json_response(_get_level(request))
+        return json_response(body)
 
     return routes
 
