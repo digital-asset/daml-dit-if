@@ -72,9 +72,9 @@ def set_log_level(level):
 
 def get_log_level_options():
     return [
-        { 'name': 'Runtime', 'level': 0  },
-        { 'name': 'Low'    , 'level': 10 },
-        { 'name': 'High'   , 'level': 20 },
-        { 'name': 'All'    , 'level': 50 },
+        { 'label': 'Runtime', 'value': 0  },
+        { 'label': 'Low'    , 'value': 10 },
+        { 'label': 'High'   , 'value': 20 },
+        { 'label': 'All'    , 'value': 50 },
     ]
 

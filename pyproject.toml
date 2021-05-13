@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "daml-dit-if"
-version = "0.4.1"
-description = "DABL Integration Framework"
+version = "0.5.1"
+description = "Daml Hub Integration Framework"
 authors = ["Mike Schaeffer <mike.schaeffer@digitalasset.com>"]
 readme = "README.md"
 repository = "https://github.com/digital-asset/daml-dit-integration-framework"
