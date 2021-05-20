@@ -57,7 +57,8 @@ class IntegrationQueueContext(IntegrationQueueEvents):
                 command_count=0,
                 use_count=0,
                 error_count=0,
-                error_message=None)
+                error_message=None,
+                error_time=None)
 
             wrapped = without_return_value(
                 as_handler_invocation(

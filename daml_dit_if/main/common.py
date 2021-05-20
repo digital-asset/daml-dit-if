@@ -2,6 +2,7 @@ import sys
 import collections
 
 from dataclasses import dataclass
+from datetime import datetime
 from functools import wraps
 from typing import Optional
 
@@ -20,7 +21,7 @@ class InvocationStatus:
     use_count: int
     error_count: int
     error_message: 'Optional[str]'
-
+    error_time: 'Optional[datetime]'
 
 def without_return_value(fn):
 
@@ -82,6 +83,7 @@ def as_handler_invocation(client: 'AIOPartyClient', inv_status: 'InvocationStatu
         except Exception:
             inv_status.error_count += 1
             inv_status.error_message = repr(sys.exc_info()[1])
+            inv_status.error_time = datetime.utcnow()
             LOG.exception('Error while processing: ' + inv_status.error_message)
 
     return wrapped

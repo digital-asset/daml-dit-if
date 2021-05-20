@@ -74,6 +74,7 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
                 use_count=0,
                 error_count=0,
                 error_message=None,
+                error_time=None,
                 sweep_enabled=sweep_enabled,
                 flow_enabled=flow_enabled)
 
