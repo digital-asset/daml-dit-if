@@ -13,7 +13,7 @@ poetry_install_marker := build/.poetry.install
 ####################################################################################################
 
 .PHONY: all
-all: clean test
+all: build
 
 .PHONY: clean
 clean:
@@ -24,15 +24,12 @@ clean:
 .PHONY: deps
 deps: $(poetry_install_marker)
 
-.PHONY: build
-build: package
-
-.PHONY: package
-package: $(daml_dit_if_bdist) $(daml_dit_if_sdist)
-
 .PHONY: publish
-publish: package
+publish: build
 	poetry publish
+
+.PHONY: build
+build: test $(daml_dit_if_bdist) $(daml_dit_if_sdist)
 
 .PHONY: version
 version:

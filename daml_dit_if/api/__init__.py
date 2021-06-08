@@ -1,4 +1,5 @@
 import abc
+import logging
 from dataclasses import dataclass, field
 
 from typing import Any, Callable, Optional, Sequence
@@ -10,8 +11,16 @@ from dazl.query import ContractMatch
 
 from daml_dit_api import DamlModelInfo
 
-from .common import ensure_package_id
-
+from .common import \
+    ensure_package_id, \
+    json_response, \
+    empty_success_response, \
+    blob_success_response, \
+    unauthorized_response, \
+    forbidden_response, \
+    not_found_response, \
+    bad_request, \
+    internal_server_error
 
 def _empty_commands() -> 'Sequence[Command]':
     return list()
@@ -264,3 +273,6 @@ class IntegrationEnvironment:
 
 IntegrationEntryPoint = \
     Callable[[IntegrationEnvironment, IntegrationEvents], None]
+
+def getIntegrationLogger():
+    return logging.getLogger('integration')

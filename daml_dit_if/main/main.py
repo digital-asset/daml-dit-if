@@ -89,15 +89,20 @@ async def _aio_main(
 
     await integration_context.safe_load_and_start()
 
-    web_coro = start_web_endpoint(config, integration_context)
-
     integration_coro = integration_context.get_coro()
 
     if integration_coro:
-        LOG.info('Integration is now ready. Starting main loop.')
+        LOG.info('Integration coroutine ready, starting web endpoint.')
+
+        web_coro = start_web_endpoint(config, integration_context)
+
+        LOG.info('Starting main loop.')
+
         await gather(web_coro, dazl_coro, integration_coro)
-    else:
-        LOG.error('Error initializing integration. Shutting down.')
+
+        return True
+
+    return False
 
 def main():
     setup_default_logging()
@@ -138,8 +143,10 @@ def main():
         LOG.info('Running integration type: %r...', type_id)
 
         loop = get_event_loop()
-        loop.run_until_complete(
-            _aio_main(integration_type, config, type_id, integration_spec))
+
+        if not loop.run_until_complete(
+                _aio_main(integration_type, config, type_id, integration_spec)):
+            FAIL('Error initializing integration, shutting down.')
 
     else:
         FAIL('No metadata file. Terminating without running')
