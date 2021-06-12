@@ -30,6 +30,7 @@ class IntegrationTimeContext(IntegrationTimeEvents):
         self.intervals = []  # type: List[Tuple[int, IntegrationTimerHandler,InvocationStatus]]
 
     def periodic_interval(self, seconds, label: 'Optional[str]' = None):
+        label_text = label or 'Periodic Interval'
         def decorator(fn: 'IntegrationTimerHandler'):
             status = InvocationStatus(
                 index=len(self.intervals),

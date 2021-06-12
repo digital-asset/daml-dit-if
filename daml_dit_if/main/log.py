@@ -16,11 +16,7 @@ LOG = logging.getLogger('dabl-if')
 
 
 def FAIL(message: str) -> typing.NoReturn:
-    global _level
-
-    msg = f'\n\n\n=== FATAL ERROR: {message} ==='
-
-    LOG.error(msg)
+    LOG.error(f'=== FATAL ERROR: {message} ===')
 
     sys.exit(9)
 
