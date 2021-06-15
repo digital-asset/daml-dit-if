@@ -1,7 +1,7 @@
 import re
 from typing import Any, Dict, Optional
 
-from asyncio import ensure_future
+from asyncio import ensure_future, gather
 from dataclasses import asdict, dataclass
 
 from aiohttp import web
@@ -14,6 +14,8 @@ from .log import \
 
 from .config import Configuration
 from .integration_context import IntegrationContext
+from .jwt import JWTValidator
+from .auth_handler import AuthHandler
 
 from ..api import json_response
 
@@ -84,8 +86,22 @@ async def start_web_endpoint(
         config: 'Configuration',
         integration_context: 'IntegrationContext'):
 
+    web_coros = []
+
     # prepare the web application
     app = Application(client_max_size=CLIENT_MAX_SIZE)
+
+    jwt = None  # type: Optional[JWTValidator]
+    if config.jwks_url:
+        LOG.info('JWKS URL: %r', config.jwks_url)
+        jwt = JWTValidator(jwks_urls=[config.jwks_url])
+
+        auth_handler = AuthHandler(config, jwt)
+        await auth_handler.setup(app)
+
+        web_coros.append(ensure_future(jwt.poll()))
+    else:
+        LOG.warn('No JWKS URL Available, all tokens will be rejected.')
 
     app.add_routes(_build_control_routes(integration_context))
 
@@ -100,6 +116,8 @@ async def start_web_endpoint(
     await runner.setup()
     site = TCPSite(runner, '0.0.0.0', config.health_port)
 
+    web_coros.append(ensure_future(site.start()))
+
     LOG.info('...Web server started')
 
-    return ensure_future(site.start())
+    return gather(*web_coros)

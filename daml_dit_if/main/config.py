@@ -14,6 +14,7 @@ class Configuration:
     type_id: 'Optional[str]'
     run_as_party: 'Optional[str]'
     log_level: int
+    jwks_url: 'Optional[str]'
 
 
 def optenv(var: str) -> 'Optional[str]':
@@ -54,7 +55,8 @@ def get_default_config() -> 'Configuration':
         integration_metadata_path=env('DABL_INTEGRATION_METADATA_PATH', 'int_args.yaml'),
         type_id=optenv('DABL_INTEGRATION_TYPE_ID'),
         run_as_party=optenv('DAML_LEDGER_PARTY'),
-        log_level=envint('DABL_LOG_LEVEL', 0))
+        log_level=envint('DABL_LOG_LEVEL', 0),
+        jwks_url=optenv('DABL_JWKS_URL'))
 
     LOG.info('Configuration: %r', asdict(config))
 
