@@ -14,15 +14,13 @@ from daml_dit_api import \
     IntegrationTypeInfo
 
 def get_local_dabl_meta() -> 'Optional[str]':
-    filename = f'pkg/{DABL_META_NAME}'
-
-    LOG.debug('Attmpting to load DABL metadata from local file: %r', filename)
+    LOG.debug('Attmpting to load DABL metadata from local file: %r', DABL_META_NAME)
 
     try:
         with open(filename, "r") as f:
             return f.read()
     except:  # noqa
-        LOG.exception(f'Failed to local dabl meta {filename}')
+        LOG.error(f'Failed to load local DABL metadata {DABL_META_NAME}')
         return None
 
 
@@ -36,8 +34,8 @@ def get_pex_dabl_meta() -> 'Optional[str]':
             with zf.open(DABL_META_NAME) as meta_file:
                 return meta_file.read().decode('UTF-8')
     except:  # noqa
-        LOG.exception(f'Failed to read {DABL_META_NAME} from PEX file {pex_filename}'
-                      f' (This is an expected error in local development scenarios.)')
+        LOG.error(f'Failed to read {DABL_META_NAME} from PEX file {pex_filename}'
+                  f' (This is an expected error in local development scenarios.)')
         return None
 
 
@@ -49,7 +47,7 @@ def get_package_metadata() -> 'PackageMetadata':
             data_class=PackageMetadata,
             data=yaml.safe_load(dabl_meta))
 
-    raise Exception(f'Could not find {DABL_META_NAME}')
+    raise Exception(f'Could not find {DABL_META_NAME}, either in running DIT file or locally.')
 
 
 def package_meta_integration_types(
