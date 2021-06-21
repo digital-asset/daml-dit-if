@@ -449,7 +449,7 @@ develop = []
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7, <4.0"
-content-hash = "418b4567e062fbce48ec6311994fca4af2a703f800ffe239ea56289ae997cdbd"
+content-hash = "7e41f04454fa7d0c7c27c155500106e66527cbfb2d532f409aec3ceecc7d7943"
 
 [metadata.files]
 aiohttp = [

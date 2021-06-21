@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "daml-dit-if"
-version = "0.5.8"
+version = "0.5.9"
 description = "Daml Hub Integration Framework"
 authors = ["Mike Schaeffer <mike.schaeffer@digitalasset.com>"]
 readme = "README.md"
@@ -11,6 +11,7 @@ keywords = ["daml", "blockchain", "dlt", "distributed ledger", "digital asset"]
 python = ">=3.7, <4.0"
 aiohttp = "*"
 dacite = "*"
+idna = "^2"
 pyyaml = "^5"
 dazl = "^7"
 daml-dit-api = "0.4.3"
