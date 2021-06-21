@@ -17,7 +17,7 @@ def get_local_dabl_meta() -> 'Optional[str]':
     LOG.debug('Attmpting to load DABL metadata from local file: %r', DABL_META_NAME)
 
     try:
-        with open(filename, "r") as f:
+        with open(DABL_META_NAME, "r") as f:
             return f.read()
     except:  # noqa
         LOG.error(f'Failed to load local DABL metadata {DABL_META_NAME}')

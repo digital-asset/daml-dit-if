@@ -1,3 +1,5 @@
+import logging
+
 from typing import Any, Optional
 
 from dazl.damlast.lookup import parse_type_con_name
@@ -10,6 +12,7 @@ from aiohttp.typedefs import LooseHeaders
 from dazl.protocols.v0.json_ser_command import LedgerJSONEncoder
 from aiohttp.helpers import sentinel
 
+LOG = logging.getLogger('dabl-if')
 
 def ensure_package_id(daml_model: 'Optional[DamlModelInfo]', template: str) -> str:
 
@@ -22,7 +25,7 @@ def ensure_package_id(daml_model: 'Optional[DamlModelInfo]', template: str) -> s
         return template
 
     if daml_model is None:
-        raise Exception(f'No default model known when ensuring package ID: {template}')
+        raise Exception(f'No default model {package} known when ensuring package ID: {template}')
     else:
         return f'{daml_model.main_package_id}:{template}'
 
