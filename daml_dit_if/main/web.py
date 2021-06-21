@@ -1,3 +1,4 @@
+import re
 from typing import Any, Dict, Optional
 
 from asyncio import ensure_future
@@ -19,6 +20,8 @@ from ..api import json_response
 # cap aiohttp to allow a maximum of 100 MB for the size of a body.
 CLIENT_MAX_SIZE = 100 * (1024 ** 2)
 
+LOG_SUPPRESSED_ROUTE_REGEX = re.compile('^(/integration/[\w]+)?/((healthz)|(status))$')
+
 
 def _build_control_routes(
         integration_context: 'IntegrationContext') -> 'RouteTableDef':
@@ -32,6 +35,12 @@ def _build_control_routes(
             '_self': str(request.url)
         }
 
+    # The control routes are exposed at both root paths and paths
+    # qualified by '/integration/{integration_id}. This is to support
+    # both the old style of querying integration status through a proxy
+    # as well as the newer direct style (that is routed based on
+    # URL path prefix).
+    @routes.get('/integration/{integration_id}/healthz')
     @routes.get('/healthz')
     async def get_container_health(request: 'Request') -> 'Response':
         response_dict = {
@@ -40,10 +49,12 @@ def _build_control_routes(
         }
         return json_response(response_dict)
 
+    @routes.get('/integration/{integration_id}/status')
     @routes.get('/status')
     async def get_container_status(request: 'Request') -> 'Response':
         return json_response(_get_status(request))
 
+    @routes.post('/integration/{integration_id}/log-level')
     @routes.post('/log-level')
     async def set_level(request: 'Request') -> 'Response':
         body = await request.json()
@@ -54,10 +65,8 @@ def _build_control_routes(
 
     return routes
 
-
-def _suppressed_route(path: str) -> bool:
-    return path.startswith('/healthz') or path.startswith('/status')
-
+def _log_suppressed_route(path: str) -> bool:
+    return LOG_SUPPRESSED_ROUTE_REGEX.match(path) is not None
 
 class IntegrationAccessLogger(AccessLogger):
     def log(self, request: 'BaseRequest', response: 'StreamResponse', time: float):
@@ -65,7 +74,7 @@ class IntegrationAccessLogger(AccessLogger):
         path = request.rel_url.path
 
         # Suppress polled routes to avoid cluttering the logs.
-        if _suppressed_route(path) and not is_debug_enabled():
+        if _log_suppressed_route(path) and not is_debug_enabled():
             return
 
         return super().log(request, response, time)
