@@ -8,6 +8,8 @@ build_dir := build/.dir
 poetry_build_marker := build/.poetry.build
 poetry_install_marker := build/.poetry.install
 
+SRC_FILES=$(shell find daml_dit_if -type f)
+
 ####################################################################################################
 ## GENERAL TARGETS                                                                                ##
 ####################################################################################################
@@ -27,6 +29,10 @@ deps: $(poetry_install_marker)
 .PHONY: publish
 publish: build
 	poetry publish
+
+.PHONY: install
+install: build
+	pip3 install --force $(daml_dit_if_bdist)
 
 .PHONY: build
 build: test $(daml_dit_if_bdist) $(daml_dit_if_sdist)
@@ -56,7 +62,7 @@ $(build_dir):
 	@mkdir -p build
 	@touch $@
 
-$(poetry_build_marker): $(build_dir) pyproject.toml $(dazl_files)
+$(poetry_build_marker): $(build_dir) pyproject.toml $(SRC_FILES)
 	poetry build
 	touch $@
 
