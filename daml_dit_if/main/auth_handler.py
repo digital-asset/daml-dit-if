@@ -67,13 +67,11 @@ def is_integration_party_claim(config: "Configuration", claims: "Mapping[str, An
     act_as_parties = ledger_claims.get('actAs', [])
     read_as_parties = ledger_claims.get('readAs', [])
 
-    LOG.info('Calculating claims. p: %r, a: %r, r: %r', party, act_as_parties, read_as_parties)
-
     return party in act_as_parties and party in read_as_parties
 
 
 class AuthHandler:
-    def __init__(self, config: 'Configuration', jwt_decoder: "JWTValidator"):
+    def __init__(self, config: 'Configuration', jwt_decoder: 'Optional[JWTValidator]'):
         self.config = config
         self.jwt_decoder = jwt_decoder
 
@@ -87,6 +85,13 @@ class AuthHandler:
         auth_level = get_handler_auth_level(request)
 
         if auth_level != AuthorizationLevel.PUBLIC:
+
+            if self.jwt_decoder is None:
+                raise unauthorized_response(
+                    "no_authorization_support",
+                    "this endpoint requires authorization, which is unavailable without JWKS support.",
+                )
+
             token = get_token(request)
             if token is None:
                 raise unauthorized_response(
@@ -101,6 +106,8 @@ class AuthHandler:
                 raise forbidden_response(
                     "invalid_token", "this endpoint was presented with an invalid token"
                 )
+
+            # TODO: Verify ledger ID here too?
 
             if auth_level == AuthorizationLevel.INTEGRATION_PARTY and \
                not is_integration_party_claim(self.config, claims):

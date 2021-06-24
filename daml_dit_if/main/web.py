@@ -96,12 +96,12 @@ async def start_web_endpoint(
         LOG.info('JWKS URL: %r', config.jwks_url)
         jwt = JWTValidator(jwks_urls=[config.jwks_url])
 
-        auth_handler = AuthHandler(config, jwt)
-        await auth_handler.setup(app)
-
         web_coros.append(ensure_future(jwt.poll()))
     else:
-        LOG.warn('No JWKS URL Available, all tokens will be rejected.')
+        LOG.warn('No JWKS URL Available, all requests requiring authorization will be rejected.')
+
+    auth_handler = AuthHandler(config, jwt)
+    await auth_handler.setup(app)
 
     app.add_routes(_build_control_routes(integration_context))
 
