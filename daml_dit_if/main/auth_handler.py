@@ -59,21 +59,33 @@ def get_handler_auth_level(request: "Request") -> 'AuthorizationLevel':
     return getattr(request.match_info.handler, DABL_AUTH_LEVEL, AuthorizationLevel.PUBLIC)
 
 
-def is_integration_party_claim(config: "Configuration", claims: "Mapping[str, Any]") -> bool:
+def get_ledger_claims(
+        config: 'Configuration', claims: "Mapping[str, Any]") -> "Optional[Mapping[str, Any]]":
+
+    ledger_claims = claims.get('https://daml.com/ledger-api')
+
+    LOG.debug('ledger_claims: %r', ledger_claims)
+
+    if ledger_claims is None:
+        return None
+
+    claimed_ledger_id = ledger_claims.get('ledgerId', 'missing-ledger-id-claim')
+
+    if claimed_ledger_id != config.ledger_id:
+        LOG.debug(f'Ledger ID mismatch in claims: {claimed_ledger_id} != {config.ledger_id}')
+        return None
+
+    return ledger_claims
+
+
+def is_integration_party_ledger_claim(config: "Configuration", ledger_claims: "Mapping[str, Any]") -> bool:
+    act_as_parties = ledger_claims.get('actAs', [])
+    read_as_parties = ledger_claims.get('readAs', [])
 
     party = config.run_as_party
 
     if party is None:
         return False
-
-    ledger_claims = claims.get('https://daml.com/ledger-api')
-
-    if ledger_claims is None:
-        LOG.info('No ledger claims found!')
-        return False
-
-    act_as_parties = ledger_claims.get('actAs', [])
-    read_as_parties = ledger_claims.get('readAs', [])
 
     return party in act_as_parties and party in read_as_parties
 
@@ -115,10 +127,17 @@ class AuthHandler:
                     "invalid_token", "this endpoint was presented with an invalid token"
                 )
 
-            # TODO: Verify ledger ID here too?
+            ledger_claims = get_ledger_claims(self.config, claims)
+
+            if ledger_claims is None:
+                raise unauthorized_response(
+                    "missing_ledger_claims",
+                    "this endpoint requires a valid token containing DAML ledger API claims"
+                    f" for ledger ID \"{self.config.ledger_id}\"" ,
+                )
 
             if auth_level == AuthorizationLevel.INTEGRATION_PARTY and \
-               not is_integration_party_claim(self.config, claims):
+               not is_integration_party_ledger_claim(self.config, ledger_claims):
 
                 raise unauthorized_response(
                     "unauthorized",
