@@ -38,13 +38,21 @@ def get_token(request: "Request") -> "Optional[str]":
         return access_token if access_token else None
 
 
-def set_handler_auth(fn: "Handler", auth_level: "AuthorizationLevel") -> "Handler":
+def set_handler_auth(fn: "Handler", auth: "AuthorizationLevel") -> "Handler":
     """
     Mark a request handler as not requiring authentication.
     """
-    setattr(fn, DABL_AUTH_LEVEL, auth_level)
+    setattr(fn, DABL_AUTH_LEVEL, auth)
 
     return fn
+
+
+def auth_level(auth: "AuthorizationLevel") -> "Callable[[Handler], Handler]":
+
+    def set(fn: "Handler") -> "Handler":
+        return set_handler_auth(fn, auth)
+
+    return set
 
 
 def get_handler_auth_level(request: "Request") -> 'AuthorizationLevel':

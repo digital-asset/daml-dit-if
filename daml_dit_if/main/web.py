@@ -15,7 +15,7 @@ from .log import \
 from .config import Configuration
 from .integration_context import IntegrationContext
 from .jwt import JWTValidator
-from .auth_handler import AuthHandler
+from .auth_handler import AuthHandler, auth_level, AuthorizationLevel
 
 from ..api import json_response
 
@@ -37,13 +37,8 @@ def _build_control_routes(
             '_self': str(request.url)
         }
 
-    # The control routes are exposed at both root paths and paths
-    # qualified by '/integration/{integration_id}. This is to support
-    # both the old style of querying integration status through a proxy
-    # as well as the newer direct style (that is routed based on
-    # URL path prefix).
     @routes.get('/integration/{integration_id}/healthz')
-    @routes.get('/healthz')
+    @auth_level(AuthorizationLevel.ANY_PARTY)
     async def get_container_health(request: 'Request') -> 'Response':
         response_dict = {
             **_get_status(request),
@@ -52,18 +47,38 @@ def _build_control_routes(
         return json_response(response_dict)
 
     @routes.get('/integration/{integration_id}/status')
-    @routes.get('/status')
+    @auth_level(AuthorizationLevel.ANY_PARTY)
     async def get_container_status(request: 'Request') -> 'Response':
         return json_response(_get_status(request))
 
     @routes.post('/integration/{integration_id}/log-level')
-    @routes.post('/log-level')
+    @auth_level(AuthorizationLevel.ANY_PARTY)
     async def set_level(request: 'Request') -> 'Response':
         body = await request.json()
 
         set_log_level(int(body['log_level']))
 
         return json_response(body)
+
+    # The control routes are duplicated at paths that are not
+    # qualified by an '/integration/{integration_id}' prefix. Due to
+    # the lack of the prefix, these are private URLs that are only
+    # addressible within the cluster. They have historically been used
+    # to allow the console access to integration controls via a
+    # secured proxy. As integrations migrate to model where security
+    # is implemented internally, these will be deprecated and replaced
+    # entirely with the secured external endpoints above.
+    @routes.get('/healthz')
+    async def internal_get_container_health(request):
+        return await get_container_health(request)
+
+    @routes.get('/status')
+    async def internal_get_container_status(request):
+        return await get_container_status(request)
+
+    @routes.post('/log-level')
+    async def internal_set_level(request):
+        return await set_level(request)
 
     return routes
 
