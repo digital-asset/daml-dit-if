@@ -11,10 +11,12 @@ if TYPE_CHECKING:
 from .log import LOG
 
 
-
 DEFAULT_POLL_INTERVAL = timedelta(seconds=10)
 IAT_SKEW = timedelta(seconds=15)
 MAX_TOKEN_EXPIRY = timedelta(days=1)
+
+
+JWTClaims = Mapping[str, Any]
 
 
 class JWTValidator:
@@ -37,7 +39,7 @@ class JWTValidator:
             await shield(self._load_new_keys())
             LOG.debug("...JWKS poll complete.")
 
-    async def decode_claims(self, token: str) -> "Mapping[str, Any]":
+    async def decode_claims(self, token: str) -> "JWTClaims":
         from jwcrypto.jwt import JWT
 
         LOG.debug("Verifying token: %r", token)

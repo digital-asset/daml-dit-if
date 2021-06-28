@@ -23,6 +23,11 @@ from .common import \
     bad_request, \
     internal_server_error
 
+from ..main.auth_accessors import \
+    get_request_parties, \
+    get_request_party
+
+
 def _empty_commands() -> 'Sequence[Command]':
     return list()
 
