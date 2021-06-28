@@ -9,33 +9,26 @@ from .log import LOG
 
 from .config import Configuration
 from .jwt import JWTValidator
-from ..api import forbidden_response, unauthorized_response, AuthorizationLevel
+
+from ..api import \
+    AuthorizationLevel
+
+from ..api.common import \
+    forbidden_response, \
+    unauthorized_response
+
+
+from .auth_accessors import \
+    DABL_JWT_LEDGER_CLAIMS, \
+    is_integration_party_ledger_claim, \
+    get_configured_integration_ledger_claims
 
 
 Handler = Callable[[Request], Awaitable[Response]]
 
 
 DABL_AUTH_LEVEL = "__dabl_auth_level__"
-DABL_JWT_CLAIMS = "DABL_JWT_CLAIMS"
 
-
-def get_token(request: "Request") -> "Optional[str]":
-    header_identity = request.headers.get("Authorization")  # type: Optional[str]
-    if header_identity is not None:
-        scheme, _, bearer_token = header_identity.partition(" ")
-        if scheme != "Bearer":
-            raise unauthorized_response(
-                "invalid_auth_scheme",
-                "Invalid authorization scheme. Should be `Bearer <token>`",
-            )
-        return bearer_token
-    else:
-        # we also accept token as a query string for GET requests because it's the only way we
-        # can get token information via redirects
-        access_token = request.query.get("access_token")
-
-        # if the query string parameter is empty, it might as well not be set at all
-        return access_token if access_token else None
 
 
 def set_handler_auth(fn: "Handler", auth: "AuthorizationLevel") -> "Handler":
@@ -59,35 +52,23 @@ def get_handler_auth_level(request: "Request") -> 'AuthorizationLevel':
     return getattr(request.match_info.handler, DABL_AUTH_LEVEL, AuthorizationLevel.PUBLIC)
 
 
-def get_ledger_claims(
-        config: 'Configuration', claims: "Mapping[str, Any]") -> "Optional[Mapping[str, Any]]":
+def _unvalidated_get_token(request: "Request") -> "Optional[str]":
+    header_identity = request.headers.get("Authorization")  # type: Optional[str]
+    if header_identity is not None:
+        scheme, _, bearer_token = header_identity.partition(" ")
+        if scheme != "Bearer" or not bearer_token or len(bearer_token) == 0:
+            raise unauthorized_response(
+                "invalid_auth_scheme",
+                "Invalid authorization scheme. Should be `Bearer <token>`",
+            )
+        return bearer_token
+    else:
+        # we also accept token as a query string for GET requests because it's the only way we
+        # can get token information via redirects
+        access_token = request.query.get("access_token")
 
-    ledger_claims = claims.get('https://daml.com/ledger-api')
-
-    LOG.debug('ledger_claims: %r', ledger_claims)
-
-    if ledger_claims is None:
-        return None
-
-    claimed_ledger_id = ledger_claims.get('ledgerId', 'missing-ledger-id-claim')
-
-    if claimed_ledger_id != config.ledger_id:
-        LOG.debug(f'Ledger ID mismatch in claims: {claimed_ledger_id} != {config.ledger_id}')
-        return None
-
-    return ledger_claims
-
-
-def is_integration_party_ledger_claim(config: "Configuration", ledger_claims: "Mapping[str, Any]") -> bool:
-    act_as_parties = ledger_claims.get('actAs', [])
-    read_as_parties = ledger_claims.get('readAs', [])
-
-    party = config.run_as_party
-
-    if party is None:
-        return False
-
-    return party in act_as_parties and party in read_as_parties
+        # if the query string parameter is empty, it might as well not be set at all
+        return access_token if access_token else None
 
 
 class AuthHandler:
@@ -112,7 +93,7 @@ class AuthHandler:
                     "this endpoint requires authorization, which is unavailable without JWKS support.",
                 )
 
-            token = get_token(request)
+            token = _unvalidated_get_token(request)
             if token is None:
                 raise unauthorized_response(
                     "missing_token",
@@ -127,7 +108,7 @@ class AuthHandler:
                     "invalid_token", "this endpoint was presented with an invalid token"
                 )
 
-            ledger_claims = get_ledger_claims(self.config, claims)
+            ledger_claims = get_configured_integration_ledger_claims(self.config, claims)
 
             if ledger_claims is None:
                 raise unauthorized_response(
@@ -144,7 +125,7 @@ class AuthHandler:
                     "unauthorized token",
                 )
 
-            request[DABL_JWT_CLAIMS] = claims
+            request[DABL_JWT_LEDGER_CLAIMS] = ledger_claims
 
         LOG.debug("Passing control to handler...")
         return await handler(request)
