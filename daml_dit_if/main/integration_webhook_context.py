@@ -12,12 +12,11 @@ from .common import \
     without_return_value, \
     as_handler_invocation
 
-from ..api import IntegrationWebhookRoutes
+from ..api import AuthorizationLevel, IntegrationWebhookRoutes
 
 from .log import LOG
-
-from .integration_deferral_queue import \
-    IntegrationDeferralQueue
+from .auth_handler import set_handler_auth
+from .integration_deferral_queue import IntegrationDeferralQueue
 
 def empty_success_response() -> 'web.HTTPOk':
     return web.HTTPOk()
@@ -76,29 +75,35 @@ class IntegrationWebhookContext(IntegrationWebhookRoutes):
     def _url_path(self, url_suffix: 'Optional[str]'):
         return '/integration/{integration_id}' + (url_suffix or '')
 
-    def post(self, url_suffix: 'Optional[str]' = None, label: 'Optional[str]' = None):
+    def post(self, url_suffix: 'Optional[str]' = None, label: 'Optional[str]' = None,
+             auth: 'Optional[AuthorizationLevel]' = AuthorizationLevel.PUBLIC):
         path = self._url_path(url_suffix)
         hook_status = self._notice_hook_route(path, 'post', label)
 
         def wrap_method(func):
-            return self.route_table.post(path=path)(
-                self._with_resp_handling(
-                    hook_status,
-                    as_handler_invocation(
-                        self.client, hook_status, func)))
+            return set_handler_auth(
+                self.route_table.post(path=path)(
+                    self._with_resp_handling(
+                        hook_status,
+                        as_handler_invocation(
+                            self.client, hook_status, func))),
+                auth)
 
         return wrap_method
 
-    def get(self, url_suffix: 'Optional[str]' = None, label: 'Optional[str]' = None):
+    def get(self, url_suffix: 'Optional[str]' = None, label: 'Optional[str]' = None,
+             auth: 'Optional[AuthorizationLevel]' = AuthorizationLevel.PUBLIC):
         path = self._url_path(url_suffix)
         hook_status = self._notice_hook_route(path, 'get', label)
 
         def wrap_method(func):
-            return self.route_table.get(path=path)(
-                self._with_resp_handling(
-                    hook_status,
-                    as_handler_invocation(
-                        self.client, hook_status, func)))
+            return set_handler_auth(
+                self.route_table.get(path=path)(
+                    self._with_resp_handling(
+                        hook_status,
+                        as_handler_invocation(
+                            self.client, hook_status, func))),
+                auth)
 
         return wrap_method
 

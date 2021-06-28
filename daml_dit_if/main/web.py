@@ -1,7 +1,7 @@
 import re
 from typing import Any, Dict, Optional
 
-from asyncio import ensure_future
+from asyncio import ensure_future, gather
 from dataclasses import asdict, dataclass
 
 from aiohttp import web
@@ -14,6 +14,8 @@ from .log import \
 
 from .config import Configuration
 from .integration_context import IntegrationContext
+from .jwt import JWTValidator
+from .auth_handler import AuthHandler, auth_level, AuthorizationLevel
 
 from ..api import json_response
 
@@ -35,13 +37,8 @@ def _build_control_routes(
             '_self': str(request.url)
         }
 
-    # The control routes are exposed at both root paths and paths
-    # qualified by '/integration/{integration_id}. This is to support
-    # both the old style of querying integration status through a proxy
-    # as well as the newer direct style (that is routed based on
-    # URL path prefix).
     @routes.get('/integration/{integration_id}/healthz')
-    @routes.get('/healthz')
+    @auth_level(AuthorizationLevel.ANY_PARTY)
     async def get_container_health(request: 'Request') -> 'Response':
         response_dict = {
             **_get_status(request),
@@ -50,18 +47,38 @@ def _build_control_routes(
         return json_response(response_dict)
 
     @routes.get('/integration/{integration_id}/status')
-    @routes.get('/status')
+    @auth_level(AuthorizationLevel.ANY_PARTY)
     async def get_container_status(request: 'Request') -> 'Response':
         return json_response(_get_status(request))
 
     @routes.post('/integration/{integration_id}/log-level')
-    @routes.post('/log-level')
+    @auth_level(AuthorizationLevel.ANY_PARTY)
     async def set_level(request: 'Request') -> 'Response':
         body = await request.json()
 
         set_log_level(int(body['log_level']))
 
         return json_response(body)
+
+    # The control routes are duplicated at paths that are not
+    # qualified by an '/integration/{integration_id}' prefix. Due to
+    # the lack of the prefix, these are private URLs that are only
+    # addressible within the cluster. They have historically been used
+    # to allow the console access to integration controls via a
+    # secured proxy. As integrations migrate to model where security
+    # is implemented internally, these will be deprecated and replaced
+    # entirely with the secured external endpoints above.
+    @routes.get('/healthz')
+    async def internal_get_container_health(request):
+        return await get_container_health(request)
+
+    @routes.get('/status')
+    async def internal_get_container_status(request):
+        return await get_container_status(request)
+
+    @routes.post('/log-level')
+    async def internal_set_level(request):
+        return await set_level(request)
 
     return routes
 
@@ -84,8 +101,22 @@ async def start_web_endpoint(
         config: 'Configuration',
         integration_context: 'IntegrationContext'):
 
+    web_coros = []
+
     # prepare the web application
     app = Application(client_max_size=CLIENT_MAX_SIZE)
+
+    jwt = None  # type: Optional[JWTValidator]
+    if config.jwks_url:
+        LOG.info('JWKS URL: %r', config.jwks_url)
+        jwt = JWTValidator(jwks_urls=[config.jwks_url])
+
+        web_coros.append(ensure_future(jwt.poll()))
+    else:
+        LOG.warn('No JWKS URL Available, all requests requiring authorization will be rejected.')
+
+    auth_handler = AuthHandler(config, jwt)
+    await auth_handler.setup(app)
 
     app.add_routes(_build_control_routes(integration_context))
 
@@ -100,6 +131,8 @@ async def start_web_endpoint(
     await runner.setup()
     site = TCPSite(runner, '0.0.0.0', config.health_port)
 
+    web_coros.append(ensure_future(site.start()))
+
     LOG.info('...Web server started')
 
-    return ensure_future(site.start())
+    return gather(*web_coros)

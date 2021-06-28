@@ -48,7 +48,7 @@ version:
 
 .PHONY: typecheck
 typecheck:
-	poetry run python3 -m mypy -p daml_dit_if
+	poetry run python3 -m mypy --config-file pytest.ini  -p daml_dit_if
 
 .PHONY: test
 test: typecheck

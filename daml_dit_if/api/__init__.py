@@ -1,4 +1,5 @@
 import abc
+from enum import Enum
 import logging
 from dataclasses import dataclass, field
 
@@ -219,10 +220,17 @@ class IntegrationWebhookResponse(IntegrationResponse):
     response: 'Optional[Response]' = None
 
 
+class AuthorizationLevel(Enum):
+    PUBLIC = "DABL_PUBLIC"
+    ANY_PARTY = "DABL_ANY_PARTY"
+    INTEGRATION_PARTY = "DABL_INTEGRATION_PARTY"
+
+
 class IntegrationWebhookRoutes:
 
     @abc.abstractmethod
-    def post(self, url_suffix: 'Optional[str]' = None, label: 'Optional[str]' = None):
+    def post(self, url_suffix: 'Optional[str]' = None, label: 'Optional[str]' = None,
+             auth: 'Optional[AuthorizationLevel]' = AuthorizationLevel.PUBLIC):
         """
         Register a function as an HTTP POST handler for the integration's webhook.
         Integration HTTP handlers must return an instance of
@@ -238,7 +246,8 @@ class IntegrationWebhookRoutes:
         """
 
     @abc.abstractmethod
-    def get(self, url_suffix: 'Optional[str]' = None, label: 'Optional[str]' = None):
+    def get(self, url_suffix: 'Optional[str]' = None, label: 'Optional[str]' = None,
+             auth: 'Optional[AuthorizationLevel]' = AuthorizationLevel.PUBLIC):
         """
         Register a function as an HTTP GET handler for the integration's webhook.
         Integration HTTP handlers must return an instance of
