@@ -25,7 +25,7 @@ from .common import \
 
 from ..main.auth_accessors import \
     get_request_parties, \
-    get_request_party
+    get_single_request_party
 
 
 def _empty_commands() -> 'Sequence[Command]':

@@ -84,14 +84,21 @@ def get_request_parties(request: 'Request'):
     return list(set(read_as_parties).intersection(set(act_as_parties)))
 
 
-def get_request_party(request: 'Request'):
+def get_single_request_party(request: 'Request'):
     """
-    Get the first (and maybe only) DAML ledger party identified in the
-    current request's JWT token. The parties returned by this function
-    are the parties that appear in _both_ the 'readAs' and 'actAs'
-    ledger claims. If there is no party, or if no token has been extracted
-    from the request (as in a public endpoint), this returns None.
+    Returns the single DAML ledger party identified in the current request's
+    JWT. For a party to be returned by this function, it must appear in _both_
+    the  'readAs' and 'actAs' ledger claims. If there is no such party, or if no
+    JWT has been extracted from the request (as in a public endpoint), this
+    returns None. If there are multiple such parties identified in the JWT,
+    it is an error, and an exception is raised.
     """
     parties = get_request_parties(request) or []
 
-    return parties[0] if parties else None
+    if parties:
+        if len(parties) == 1:
+            return parties[0]
+        else:
+            raise Exception(f'Only one ledger party expected in token: {parties}')
+
+    return None

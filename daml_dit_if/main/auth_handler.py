@@ -52,7 +52,7 @@ def get_handler_auth_level(request: "Request") -> 'AuthorizationLevel':
     return getattr(request.match_info.handler, DABL_AUTH_LEVEL, AuthorizationLevel.PUBLIC)
 
 
-def get_token(request: "Request") -> "Optional[str]":
+def _unvalidated_get_token(request: "Request") -> "Optional[str]":
     header_identity = request.headers.get("Authorization")  # type: Optional[str]
     if header_identity is not None:
         scheme, _, bearer_token = header_identity.partition(" ")
@@ -93,7 +93,7 @@ class AuthHandler:
                     "this endpoint requires authorization, which is unavailable without JWKS support.",
                 )
 
-            token = get_token(request)
+            token = _unvalidated_get_token(request)
             if token is None:
                 raise unauthorized_response(
                     "missing_token",
