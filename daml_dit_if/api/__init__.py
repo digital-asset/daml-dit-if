@@ -31,6 +31,7 @@ from ..main.auth_accessors import \
 def _empty_commands() -> 'Sequence[Command]':
     return list()
 
+
 @dataclass(frozen=True)
 class IntegrationResponse:
     """
@@ -38,6 +39,7 @@ class IntegrationResponse:
     a sequence of zero or more ledger commands to issue.
     """
     commands: 'Optional[Sequence[Command]]' = field(default_factory=_empty_commands)
+    command_timeout: 'int' = 5
 
 
 class IntegrationQueueSink:
