@@ -44,9 +44,6 @@ from .integration_webhook_context import \
 from .integration_ledger_context import \
     IntegrationLedgerContext, LedgerHandlerStatus
 
-from .package_metadata_introspection import \
-    get_daml_model_info
-
 from .common import \
     InvocationStatus, \
     without_return_value, \
@@ -56,6 +53,8 @@ from .common import \
 from .config import Configuration
 
 from .log import FAIL, LOG
+
+from daml_dit_api import PackageMetadata
 
 
 @dataclass(frozen=True)
@@ -120,7 +119,8 @@ class IntegrationContext:
                  run_as_party: 'Optional[str]',
                  integration_type: 'IntegrationTypeInfo',
                  type_id: str,
-                 integration_spec: 'IntegrationRuntimeSpec'):
+                 integration_spec: 'IntegrationRuntimeSpec',
+                 metadata: 'PackageMetadata'):
 
         self.start_time = datetime.utcnow()
 
@@ -129,6 +129,7 @@ class IntegrationContext:
         self.run_as_party = run_as_party
         self.integration_type = integration_type
         self.integration_spec = integration_spec
+        self.metadata = metadata
 
         self._party_fallback_to_metadata()
 
@@ -204,11 +205,9 @@ class IntegrationContext:
 
         LOG.info("Starting integration with metadata: %r", metadata)
 
-        daml_model = get_daml_model_info();
-
         self.queue_context = IntegrationQueueContext(self.queue, client)
         self.time_context = IntegrationTimeContext(self.queue, client)
-        self.ledger_context = IntegrationLedgerContext(self.queue, client, daml_model)
+        self.ledger_context = IntegrationLedgerContext(self.queue, client, self.metadata.daml_model)
         self.webhook_context = IntegrationWebhookContext(self.queue, client)
 
         events = IntegrationEvents(
@@ -221,7 +220,7 @@ class IntegrationContext:
             **metadata,
             'queue': self.queue_context.sink,
             'party': self.run_as_party,
-            'daml_model': daml_model
+            'daml_model': self.metadata.daml_model
             }
 
         integration_env = from_dict(

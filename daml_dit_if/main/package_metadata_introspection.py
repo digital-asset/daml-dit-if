@@ -13,18 +13,23 @@ from daml_dit_api import \
     PackageMetadata, \
     IntegrationTypeInfo
 
-def get_local_dabl_meta() -> 'Optional[str]':
-    LOG.debug('Attmpting to load DABL metadata from local file: %r', DABL_META_NAME)
+from .config import Configuration
+
+def _get_local_dabl_meta(config: 'Configuration') -> 'Optional[str]':
+    dit_meta_path = config.dit_meta_path
+
+    LOG.debug('Attmpting to load DABL metadata from local file: %r',
+              dit_meta_path)
 
     try:
-        with open(DABL_META_NAME, "r") as f:
+        with open(dit_meta_path, "r") as f:
             return f.read()
     except:  # noqa
-        LOG.error(f'Failed to load local DABL metadata {DABL_META_NAME}')
+        LOG.error(f'Failed to load local DABL metadata {dit_meta_path}')
         return None
 
 
-def get_pex_dabl_meta() -> 'Optional[str]':
+def _get_pex_dabl_meta() -> 'Optional[str]':
     pex_filename = sys.argv[0]
 
     LOG.debug('Attmpting to load DABL metadata from PEX file: %r', pex_filename)
@@ -39,29 +44,13 @@ def get_pex_dabl_meta() -> 'Optional[str]':
         return None
 
 
-def get_package_metadata() -> 'PackageMetadata':
-    dabl_meta = get_pex_dabl_meta() or get_local_dabl_meta()
+def get_package_metadata(config: 'Configuration') -> 'PackageMetadata':
+    dabl_meta = _get_pex_dabl_meta() or _get_local_dabl_meta(config)
 
     if dabl_meta:
         return from_dict(
             data_class=PackageMetadata,
             data=yaml.safe_load(dabl_meta))
 
-    raise Exception(f'Could not find {DABL_META_NAME}, either in running DIT file or locally.')
-
-
-def package_meta_integration_types(
-        package_metadata: 'PackageMetadata') -> 'Dict[str, IntegrationTypeInfo]':
-
-    package_itypes = (package_metadata.integration_types
-                      or package_metadata.integrations  # support for deprecated
-                      or [])
-
-    return {itype.id: itype for itype in package_itypes}
-
-
-def get_daml_model_info() -> 'Optional[DamlModelInfo]':
-    return get_package_metadata().daml_model
-
-def get_integration_types() -> 'Dict[str, IntegrationTypeInfo]':
-    return package_meta_integration_types(get_package_metadata())
+    raise Exception(f'Could not find {DABL_META_NAME}, either in running DIT '
+                    f'file or locally as {config.dit_meta_path}.')
