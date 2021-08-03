@@ -1,6 +1,7 @@
 import sys
 import collections
 
+from asyncio import wait_for
 from dataclasses import dataclass
 from datetime import datetime
 from functools import wraps
@@ -73,10 +74,15 @@ def as_handler_invocation(client: 'AIOPartyClient', inv_status: 'InvocationStatu
                 await fn(*args, **kwargs))
 
             if response.commands:
-                LOG.debug('Submitting ledger commands: %r', response.commands)
-
+                LOG.debug('Submitting ledger commands (timeout=%r sec): %r',
+                          response.command_timeout, response.commands)
+                
                 inv_status.command_count += len(response.commands)
-                await client.submit(response.commands)
+
+                await wait_for(
+                    client.submit(response.commands),
+                    response.command_timeout
+                )
 
             return response
 

@@ -1,6 +1,7 @@
 import asyncio
 import base64
 import logging
+import pkg_resources
 import sys
 import yaml
 
@@ -20,7 +21,8 @@ from dazl import Network
 
 from daml_dit_api import \
     IntegrationRuntimeSpec, \
-    IntegrationTypeInfo
+    IntegrationTypeInfo, \
+    PackageMetadata
 
 from .config import Configuration, get_default_config
 
@@ -29,27 +31,25 @@ from .log import FAIL, LOG, setup_default_logging, set_log_level
 from .web import start_web_endpoint
 
 from .integration_context import IntegrationContext
-from .package_metadata_introspection import get_integration_types
-
-import pkg_resources
+from .package_metadata_introspection import get_package_metadata
 
 
 def load_integration_spec(config: 'Configuration') -> 'Optional[IntegrationRuntimeSpec]':
-    metadata_path = Path(config.integration_metadata_path)
+    spec_path = Path(config.integration_spec_path)
 
-    if metadata_path.exists():
-        LOG.debug('Loading integration metadata from: %r', metadata_path)
+    if spec_path.exists():
+        LOG.debug('Loading integration spec from: %r', spec_path)
 
-        yaml_metadata=yaml.safe_load(metadata_path.read_bytes())
+        yaml_spec=yaml.safe_load(spec_path.read_bytes())
 
-        LOG.info('Integration metadata: %r', yaml_metadata)
+        LOG.info('Integration spec: %r', yaml_spec)
 
         return from_dict(
             data_class=IntegrationRuntimeSpec,
-            data=yaml_metadata)
+            data=yaml_spec)
 
     else:
-        LOG.error(f'No metadata file found at: {repr(metadata_path)}')
+        LOG.error(f'No spec file found at: {repr(spec_path)}')
         return None
 
 
@@ -78,14 +78,15 @@ async def _aio_main(
         integration_type: 'IntegrationTypeInfo',
         config: 'Configuration',
         type_id: str,
-        integration_spec: 'IntegrationRuntimeSpec'):
+        integration_spec: 'IntegrationRuntimeSpec',
+        metadata: 'PackageMetadata'):
 
     network = create_network(config.ledger_url)
     dazl_coro = ensure_future(run_dazl_network(network))
 
     integration_context = \
         IntegrationContext(
-            network, config.run_as_party, integration_type, type_id, integration_spec)
+            network, config.run_as_party, integration_type, type_id, integration_spec, metadata)
 
     await integration_context.safe_load_and_start()
 
@@ -104,6 +105,16 @@ async def _aio_main(
 
     return False
 
+
+def _get_integration_types(metadata: 'PackageMetadata') -> 'Dict[str, IntegrationTypeInfo]':
+
+    package_itypes = (metadata.integration_types
+                      or metadata.integrations  # support for deprecated
+                      or [])
+
+    return {itype.id: itype for itype in package_itypes}
+
+
 def main():
     setup_default_logging()
 
@@ -117,7 +128,9 @@ def main():
 
     set_log_level(config.log_level)
 
-    integration_types = get_integration_types()
+    metadata = get_package_metadata(config)
+
+    integration_types = _get_integration_types(metadata)
     integration_spec = load_integration_spec(config)
 
     type_id = config.type_id
@@ -145,7 +158,7 @@ def main():
         loop = get_event_loop()
 
         if not loop.run_until_complete(
-                _aio_main(integration_type, config, type_id, integration_spec)):
+                _aio_main(integration_type, config, type_id, integration_spec, metadata)):
             FAIL('Error initializing integration, shutting down.')
 
     else:
