@@ -76,7 +76,7 @@ def as_handler_invocation(client: 'AIOPartyClient', inv_status: 'InvocationStatu
             if response.commands:
                 LOG.debug('Submitting ledger commands (timeout=%r sec): %r',
                           response.command_timeout, response.commands)
-                
+
                 inv_status.command_count += len(response.commands)
 
                 await wait_for(

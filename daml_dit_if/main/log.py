@@ -12,7 +12,7 @@ import typing
 _level = 0
 
 
-LOG = logging.getLogger('dabl-if')
+LOG = logging.getLogger('daml-dit-if')
 
 
 def FAIL(message: str) -> typing.NoReturn:
@@ -54,7 +54,7 @@ def set_log_level(level):
     logging.getLogger('integration').setLevel(
         logging.DEBUG if level >= 10 else logging.INFO)
 
-    logging.getLogger('dabl-if').setLevel(
+    logging.getLogger('daml-dit-if').setLevel(
         logging.DEBUG if level >= 20 else logging.INFO)
 
     logging.getLogger('dazl').setLevel(
