@@ -12,7 +12,7 @@ from aiohttp.typedefs import LooseHeaders
 from dazl.protocols.v0.json_ser_command import LedgerJSONEncoder
 from aiohttp.helpers import sentinel
 
-LOG = logging.getLogger('dabl-if')
+LOG = logging.getLogger('daml-dit-if')
 
 def ensure_package_id(daml_model: 'Optional[DamlModelInfo]', template: str) -> str:
 
