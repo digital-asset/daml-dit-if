@@ -63,7 +63,6 @@ async def run_dazl_network(network: 'Network'):
     """
     Run the dazl network, and make sure that fatal dazl errors terminate the application.
     """
-
     try:
         LOG.info('Starting dazl network...')
 
@@ -88,7 +87,7 @@ async def _aio_main(
         IntegrationContext(
             network, config.run_as_party, integration_type, type_id, integration_spec, metadata)
 
-    await integration_context.safe_load_and_start()
+    await integration_context.safe_load()
 
     integration_coro = integration_context.get_coro()
 
@@ -97,9 +96,11 @@ async def _aio_main(
 
         web_coro = start_web_endpoint(config, integration_context)
 
-        LOG.info('Starting main loop.')
+        integration_startup_coro = integration_context.safe_start()
 
-        await gather(web_coro, dazl_coro, integration_coro)
+        LOG.info('Starting main loop.')
+        await gather(
+            web_coro, dazl_coro, integration_coro, integration_startup_coro)
 
         return True
 

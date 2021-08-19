@@ -187,16 +187,13 @@ class IntegrationContext:
             return IntegrationEnvironment
 
 
-    async def _load_and_start(self):
+    async def _load(self):
         metadata = self.integration_spec.metadata
 
         LOG.info('Starting ledger client for party: %r', self.run_as_party)
 
         client = self.network.aio_party(self.run_as_party)
-
-        await client.ready()
-
-        LOG.info('Ledger client ready')
+        self.client = client
 
         env_class = self.get_integration_env_class(self.integration_type)
         entry_fn = self.get_integration_entrypoint(self.integration_type)
@@ -234,10 +231,6 @@ class IntegrationContext:
 
         user_coro = entry_fn(integration_env, events)
 
-        await self.ledger_context.process_sweeps()
-
-        self.running = True
-
         int_coros = [
             self.queue.start(),
             self.time_context.start(),
@@ -247,6 +240,19 @@ class IntegrationContext:
             int_coros.append(user_coro)
 
         self.int_toplevel_coro = asyncio.gather(*int_coros)
+
+
+    async def _start(self):
+        LOG.info('Starting integration...')
+
+        await self.client.ready()
+        LOG.info('...Ledger client ready, processing sweeps...')
+
+        await self.ledger_context.process_sweeps()
+
+        self.running = True
+        LOG.info('...sweeps procesed, integration started.')
+
 
     def get_status(self) -> 'IntegrationStatus':
         return IntegrationStatus(
@@ -260,9 +266,20 @@ class IntegrationContext:
             timers=self.time_context.get_status() if self.time_context else [],
             queues=self.queue_context.get_status() if self.queue_context else [])
 
-    async def safe_load_and_start(self):
+    async def safe_load(self):
         try:
-            await self._load_and_start()
+            await self._load()
+        except:  # noqa
+            ex = sys.exc_info()[1]
+
+            self.error_message = f'{repr(ex)} - {str(ex)}'
+            self.error_time = datetime.utcnow()
+
+            LOG.exception("Failure loading integration.")
+
+    async def safe_start(self):
+        try:
+            await self._start()
         except:  # noqa
             ex = sys.exc_info()[1]
 

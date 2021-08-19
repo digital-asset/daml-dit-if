@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "daml-dit-if"
-version = "0.6.2"
+version = "0.6.3"
 description = "Daml Hub Integration Framework"
 authors = ["Mike Schaeffer <mike.schaeffer@digitalasset.com>"]
 readme = "README.md"
