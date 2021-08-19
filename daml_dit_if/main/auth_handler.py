@@ -127,5 +127,5 @@ class AuthHandler:
 
             request[DABL_JWT_LEDGER_CLAIMS] = ledger_claims
 
-        LOG.debug("Passing control to handler...")
+        LOG.debug("Passing control to handler...: (%r)", handler)
         return await handler(request)

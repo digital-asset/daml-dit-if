@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Optional, Sequence
 
 from aiohttp.web import Response
+from aiohttp.helpers import sentinel
 
 from dazl import Command, ContractData, ContractId
 from dazl.query import ContractMatch
@@ -225,6 +226,13 @@ class IntegrationWebhookResponse(IntegrationResponse):
     """
 
     response: 'Optional[Response]' = None
+
+    json_response: Any = sentinel
+    text_response: 'Optional[str]' = None
+    blob_response: 'Optional[bytes]' = None
+
+    http_content_type: 'Optional[str]' = None
+    http_status: int = 200
 
 
 class AuthorizationLevel(Enum):
