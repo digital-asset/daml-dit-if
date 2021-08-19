@@ -101,6 +101,8 @@ async def start_web_endpoint(
         config: 'Configuration',
         integration_context: 'IntegrationContext'):
 
+    LOG.info('Starting web endpoint...')
+
     web_coros = []
 
     # prepare the web application
@@ -120,7 +122,7 @@ async def start_web_endpoint(
 
     app.add_routes(_build_control_routes(integration_context))
 
-    if integration_context.running and integration_context.webhook_context:
+    if integration_context.webhook_context:
         app.add_routes(integration_context.webhook_context.route_table)
 
     LOG.info('Starting web server on %s...', config.health_port)
