@@ -137,7 +137,7 @@ dazl = ">=7,<8"
 
 [[package]]
 name = "dazl"
-version = "7.5.8"
+version = "7.5.9"
 description = "high-level Ledger API client for DAML ledgers"
 category = "main"
 optional = false
@@ -674,8 +674,8 @@ daml-dit-api = [
     {file = "daml_dit_api-0.4.3-py3-none-any.whl", hash = "sha256:158c857abe824a0a2057f9511ea02302d9ea9051569d996539c82f67b3a6936d"},
 ]
 dazl = [
-    {file = "dazl-7.5.8-py3-none-any.whl", hash = "sha256:7ae072645a8ed611c8ec2119d96145a8a8de9a7b6bcd99d0c067bf4da0f0dd26"},
-    {file = "dazl-7.5.8.tar.gz", hash = "sha256:a2de9fae210613b45b742aa6ee485c724fc0e9b9ffc9ea0c51a95c20725df4bb"},
+    {file = "dazl-7.5.9-py3-none-any.whl", hash = "sha256:e8b6ec8d4dc9ca39ec4217ad0d28fa411f0bdc3a83df906543a91695d873283c"},
+    {file = "dazl-7.5.9.tar.gz", hash = "sha256:5e849d871171a1c5421da7d307dee10acbf2df67009ce341da3b1740f2162c38"},
 ]
 deprecated = [
     {file = "Deprecated-1.2.12-py2.py3-none-any.whl", hash = "sha256:08452d69b6b5bc66e8330adde0a4f8642e969b9e1702904d137eeb29c8ffc771"},
