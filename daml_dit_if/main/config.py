@@ -18,6 +18,7 @@ class Configuration:
     run_as_party: 'Optional[str]'
     log_level: int
     jwks_url: 'Optional[str]'
+    queue_size: int
 
 
 def optenv(var: str) -> 'Optional[str]':
@@ -60,7 +61,8 @@ def get_default_config() -> 'Configuration':
         type_id=optenv('DABL_INTEGRATION_TYPE_ID'),
         run_as_party=optenv('DAML_LEDGER_PARTY'),
         log_level=envint('DABL_LOG_LEVEL', 0),
-        jwks_url=optenv('DABL_JWKS_URL'))
+        jwks_url=optenv('DABL_JWKS_URL'),
+        queue_size=envint('DABL_QUEUE_SIZE', 512))
 
     LOG.info('Configuration: %r', asdict(config))
 

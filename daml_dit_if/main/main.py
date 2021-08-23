@@ -85,7 +85,7 @@ async def _aio_main(
 
     integration_context = \
         IntegrationContext(
-            network, config.run_as_party, integration_type, type_id, integration_spec, metadata)
+            network, config, integration_type, type_id, integration_spec, metadata)
 
     await integration_context.safe_load()
 

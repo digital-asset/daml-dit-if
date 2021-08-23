@@ -6,7 +6,9 @@ from typing import Callable
 
 from .log import LOG
 
-from .common import InvocationStatus
+from .common import IntegrationQueueStatus, InvocationStatus
+
+from .config import Configuration
 
 DeferredAction = Callable[[], None]
 
@@ -19,17 +21,33 @@ class IntegrationQueueAction:
 
 class IntegrationDeferralQueue:
 
-    def __init__(self):
+    def __init__(self, config: 'Configuration'):
+        self.total_events = 0
+        self.skipped_events = 0
+        self.queue_size = config.queue_size
+
         self.queue = \
-            asyncio.Queue(maxsize=10)  # type: asyncio.Queue[IntegrationQueueAction]
+            asyncio.Queue(maxsize=self.queue_size)  # type: asyncio.Queue[IntegrationQueueAction]
 
     async def put(self, action: DeferredAction, status: InvocationStatus):
-        await self.queue.put(IntegrationQueueAction(
-            action=action,
-            status=status))
+        self.total_events = self.total_events + 1
 
-    def qsize(self):
-        return self.queue.qsize()
+        try:
+            self.queue.put_nowait(IntegrationQueueAction(
+                action=action,
+                status=status))
+
+        except asyncio.QueueFull:
+            self.skipped_events = self.skipped_events + 1
+            LOG.error('Work queue overrun, skipping event: %r', status)
+            raise
+
+    def get_status(self) -> 'IntegrationQueueStatus':
+        return IntegrationQueueStatus(
+            total_events=self.total_events,
+            pending_events=self.queue.qsize(),
+            skipped_events=self.skipped_events,
+            queue_size=self.queue_size)
 
     async def start(self):
         LOG.info('Queue worker starting.')

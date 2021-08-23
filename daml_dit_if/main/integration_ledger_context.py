@@ -107,18 +107,6 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
 
         LOG.info("Done with ready handlers and sweeps")
 
-    def _with_deferral(self, status, handler):
-
-        async def wrapped(*args, **kwargs):
-            async def pending():
-                await handler(*args, **kwargs)
-
-            LOG.debug("Deferring call: %r", pending)
-
-            await self.queue.put(pending, status)
-
-        return wrapped
-
     def _to_int_create_event(self, dazl_event):
         return IntegrationLedgerContractCreateEvent(
             initial=False,
@@ -129,11 +117,9 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
         handler_status = self._notice_handler('Ledger Init', None, False, True)
 
         def wrap_method(func):
-            handler = self._with_deferral(
-                handler_status,
-                without_return_value(
-                    as_handler_invocation(
-                        self.client, handler_status, func)))
+            handler = without_return_value(
+                as_handler_invocation(
+                    self.client, handler_status, func))
 
             self.init_handlers.append(handler)
 
@@ -145,11 +131,9 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
         handler_status = self._notice_handler('Ledger Ready', None, False, True)
 
         def wrap_method(func):
-            handler = self._with_deferral(
-                handler_status,
-                without_return_value(
-                    as_handler_invocation(
-                        self.client, handler_status, func)))
+            handler = without_return_value(
+                as_handler_invocation(
+                    self.client, handler_status, func))
 
             self.ready_handlers.append(handler)
 
@@ -168,13 +152,11 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
                                  for e in dazl_event.contract_events])
 
         def wrap_method(func):
-            handler = self._with_deferral(
-                handler_status,
-                with_marshalling(
-                    to_int_event,
-                    without_return_value(
-                        as_handler_invocation(
-                            self.client, handler_status, func))))
+            handler = with_marshalling(
+                to_int_event,
+                without_return_value(
+                    as_handler_invocation(
+                        self.client, handler_status, func)))
 
             self.client.add_ledger_transaction_start(handler)
 
@@ -194,13 +176,11 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
                                  for e in dazl_event.contract_events])
 
         def wrap_method(func):
-            handler = self._with_deferral(
-                handler_status,
-                with_marshalling(
-                    to_int_event,
-                    without_return_value(
-                        as_handler_invocation(
-                            self.client, handler_status, func))))
+            handler = with_marshalling(
+                to_int_event,
+                without_return_value(
+                    as_handler_invocation(
+                        self.client, handler_status, func)))
 
             self.client.add_ledger_transaction_end(handler)
 
@@ -224,11 +204,9 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
             self._notice_handler(f'Contract Create', ftemplate, sweep, flow)
 
         def wrap_method(func):
-            wfunc = self._with_deferral(
-                handler_status,
-                without_return_value(
-                    as_handler_invocation(
-                        self.client, handler_status, func)))
+            wfunc = without_return_value(
+                as_handler_invocation(
+                    self.client, handler_status, func))
 
             if sweep:
                 self.sweeps.append((ftemplate, match, wfunc))
@@ -260,13 +238,11 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
                 cid=dazl_event.cid)
 
         def wrap_method(func):
-            handler = self._with_deferral(
-                handler_status,
-                with_marshalling(
-                    to_int_event,
-                    without_return_value(
-                        as_handler_invocation(
-                            self.client, handler_status, func))))
+            handler = with_marshalling(
+                to_int_event,
+                without_return_value(
+                    as_handler_invocation(
+                        self.client, handler_status, func)))
 
             self.client.add_ledger_archived(ftemplate, match=match, handler=handler)
 
