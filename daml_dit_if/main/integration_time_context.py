@@ -58,7 +58,14 @@ class IntegrationTimeContext(IntegrationTimeEvents):
             while True:
                 LOG.debug('Wait loop waiting %r seconds...', seconds)
                 await asyncio.sleep(seconds)
-                await self.queue.put(fn, status)
+
+                try:
+                    await self.queue.put(fn, status)
+
+                except asyncio.QueueFull:
+                    LOG.debug('Ignoring full event queue and continuing timer loop')
+                    pass
+
         except:  # noqa: E722
             LOG.exception('Unexpected error in wait loop (%r, %r).', seconds, fn)
 

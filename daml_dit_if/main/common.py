@@ -14,6 +14,15 @@ from ..api import IntegrationResponse
 from .log import LOG
 
 
+
+@dataclass(frozen=True)
+class IntegrationQueueStatus:
+    queue_size: int
+    total_events: int
+    pending_events: int
+    skipped_events: int
+
+
 @dataclass
 class InvocationStatus:
     index: int

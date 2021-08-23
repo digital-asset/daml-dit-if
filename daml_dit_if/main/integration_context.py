@@ -45,6 +45,7 @@ from .integration_ledger_context import \
     IntegrationLedgerContext, LedgerHandlerStatus
 
 from .common import \
+    IntegrationQueueStatus, \
     InvocationStatus, \
     without_return_value, \
     with_marshalling, \
@@ -64,6 +65,7 @@ class IntegrationStatus:
     error_message: 'Optional[str]'
     error_time: 'Optional[datetime]'
     pending_events: int
+    event_queue: 'IntegrationQueueStatus'
     webhooks: 'Sequence[WebhookRouteStatus]'
     ledger_events: 'Sequence[LedgerHandlerStatus]'
     timers: 'Sequence[InvocationStatus]'
@@ -116,7 +118,7 @@ class IntegrationContext:
 
     def __init__(self,
                  network: 'Network',
-                 run_as_party: 'Optional[str]',
+                 config: 'Configuration',
                  integration_type: 'IntegrationTypeInfo',
                  type_id: str,
                  integration_spec: 'IntegrationRuntimeSpec',
@@ -126,7 +128,7 @@ class IntegrationContext:
 
         self.type_id = type_id
         self.network = network
-        self.run_as_party = run_as_party
+        self.run_as_party = config.run_as_party
         self.integration_type = integration_type
         self.integration_spec = integration_spec
         self.metadata = metadata
@@ -139,7 +141,7 @@ class IntegrationContext:
         self.error_message = None  # type: Optional[str]
         self.error_time = None  # type: Optional[datetime]
 
-        self.queue = IntegrationDeferralQueue()
+        self.queue = IntegrationDeferralQueue(config)
 
         self.queue_context = None  # type: Optional[IntegrationQueueContext]
         self.time_context = None  # type: Optional[IntegrationTimeContext]
@@ -255,12 +257,15 @@ class IntegrationContext:
 
 
     def get_status(self) -> 'IntegrationStatus':
+        queue_status = self.queue.get_status()
+
         return IntegrationStatus(
             running=self.running,
             start_time=self.start_time,
             error_message=self.error_message,
             error_time=self.error_time,
-            pending_events=self.queue.qsize(),
+            pending_events=queue_status.pending_events,
+            event_queue=queue_status,
             webhooks=self.webhook_context.get_status() if self.webhook_context else [],
             ledger_events=self.ledger_context.get_status() if self.ledger_context else [],
             timers=self.time_context.get_status() if self.time_context else [],
