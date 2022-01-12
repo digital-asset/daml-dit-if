@@ -1,32 +1,27 @@
 import abc
-from enum import Enum
 import logging
 from dataclasses import dataclass, field
-
+from enum import Enum
 from typing import Any, Callable, Optional, Sequence
 
-from aiohttp.web import Response
 from aiohttp.helpers import sentinel
-
+from aiohttp.web import Response
+from daml_dit_api import DamlModelInfo
 from dazl import Command, ContractData, ContractId
 from dazl.query import ContractMatch
 
-from daml_dit_api import DamlModelInfo
-
-from .common import \
-    ensure_package_id, \
-    json_response, \
-    empty_success_response, \
-    blob_success_response, \
-    unauthorized_response, \
-    forbidden_response, \
-    not_found_response, \
-    bad_request, \
-    internal_server_error
-
-from ..main.auth_accessors import \
-    get_request_parties, \
-    get_single_request_party
+from ..main.auth_accessors import get_request_parties, get_single_request_party
+from .common import (
+    bad_request,
+    blob_success_response,
+    empty_success_response,
+    ensure_package_id,
+    forbidden_response,
+    internal_server_error,
+    json_response,
+    not_found_response,
+    unauthorized_response,
+)
 
 
 def _empty_commands() -> 'Sequence[Command]':

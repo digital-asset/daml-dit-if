@@ -1,8 +1,6 @@
 import asyncio
 import os
 import sys
-import yaml
-
 from dataclasses import dataclass
 from datetime import datetime
 from functools import wraps
@@ -10,52 +8,35 @@ from importlib import import_module
 from types import ModuleType
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type
 
-from dazl import AIOPartyClient, Network, Command
+import yaml
+from dacite import Config, from_dict
+from daml_dit_api import (
+    METADATA_COMMON_RUN_AS_PARTY,
+    METADATA_INTEGRATION_ENABLED,
+    METADATA_INTEGRATION_RUN_AS_PARTY,
+    METADATA_INTEGRATION_TYPE_ID,
+    IntegrationRuntimeSpec,
+    IntegrationTypeInfo,
+    PackageMetadata,
+)
+from dazl import AIOPartyClient, Command, Network
 from dazl.util.prim_types import to_boolean
 
-from dacite import from_dict, Config
-
-from daml_dit_api import \
-    METADATA_INTEGRATION_ENABLED, \
-    METADATA_COMMON_RUN_AS_PARTY, \
-    METADATA_INTEGRATION_RUN_AS_PARTY, \
-    METADATA_INTEGRATION_TYPE_ID, \
-    IntegrationRuntimeSpec, \
-    IntegrationTypeInfo
-
-
-from ..api import \
-    IntegrationEntryPoint, \
-    IntegrationEnvironment, \
-    IntegrationEvents
-
-from .integration_deferral_queue import \
-    IntegrationDeferralQueue
-
-from .integration_queue_context import \
-    IntegrationQueueContext
-
-from .integration_time_context import \
-    IntegrationTimeContext
-
-from .integration_webhook_context import \
-    IntegrationWebhookContext, WebhookRouteStatus
-
-from .integration_ledger_context import \
-    IntegrationLedgerContext, LedgerHandlerStatus
-
-from .common import \
-    IntegrationQueueStatus, \
-    InvocationStatus, \
-    without_return_value, \
-    with_marshalling, \
-    as_handler_invocation
-
+from ..api import IntegrationEntryPoint, IntegrationEnvironment, IntegrationEvents
+from .common import (
+    IntegrationQueueStatus,
+    InvocationStatus,
+    as_handler_invocation,
+    with_marshalling,
+    without_return_value,
+)
 from .config import Configuration
-
+from .integration_deferral_queue import IntegrationDeferralQueue
+from .integration_ledger_context import IntegrationLedgerContext, LedgerHandlerStatus
+from .integration_queue_context import IntegrationQueueContext
+from .integration_time_context import IntegrationTimeContext
+from .integration_webhook_context import IntegrationWebhookContext, WebhookRouteStatus
 from .log import FAIL, LOG
-
-from daml_dit_api import PackageMetadata
 
 
 @dataclass(frozen=True)

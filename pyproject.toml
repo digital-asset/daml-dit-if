@@ -22,9 +22,13 @@ mypy = "*"
 pytest = "^5.4.3"
 pytest-asyncio = "*"
 pytest-codestyle = "*"
+isort = "^5.10.1"
 
 [tool.poetry.extras]
 develop = []
+
+[tool.isort]
+profile = "black"
 
 [build-system]
 requires = ["poetry_core==1.0.0a8"]

@@ -1,19 +1,19 @@
 import sys
-import yaml
-from dacite import from_dict, Config
-
-from typing import Optional, Dict
-
-from .log import LOG
+from typing import Dict, Optional
 from zipfile import ZipFile
 
-from daml_dit_api import \
-    DABL_META_NAME, \
-    DamlModelInfo, \
-    PackageMetadata, \
-    IntegrationTypeInfo
+import yaml
+from dacite import Config, from_dict
+from daml_dit_api import (
+    DABL_META_NAME,
+    DamlModelInfo,
+    IntegrationTypeInfo,
+    PackageMetadata,
+)
 
 from .config import Configuration
+from .log import LOG
+
 
 def _get_local_dabl_meta(config: 'Configuration') -> 'Optional[str]':
     dit_meta_path = config.dit_meta_path

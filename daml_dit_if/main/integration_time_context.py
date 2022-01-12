@@ -1,23 +1,13 @@
 import asyncio
-
 from dataclasses import dataclass
-from typing import List, Tuple, Optional, Callable, Sequence
+from typing import Callable, List, Optional, Sequence, Tuple
 
 from dazl import AIOPartyClient, Command
 
-from .log import LOG
-
 from ..api import IntegrationTimeEvents
-
-from .common import \
-    InvocationStatus, \
-    without_return_value, \
-    as_handler_invocation
-
-
-from .integration_deferral_queue import \
-    IntegrationDeferralQueue
-
+from .common import InvocationStatus, as_handler_invocation, without_return_value
+from .integration_deferral_queue import IntegrationDeferralQueue
+from .log import LOG
 
 IntegrationTimerHandler = Callable[[], None]
 

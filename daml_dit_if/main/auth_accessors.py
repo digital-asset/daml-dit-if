@@ -2,12 +2,9 @@ from typing import Optional
 
 from aiohttp.web import Request
 
-from .jwt import JWTClaims
-
-from .log import LOG
-
 from .config import Configuration
-
+from .jwt import JWTClaims
+from .log import LOG
 
 DABL_JWT_LEDGER_CLAIMS = "DABL_JWT_LEDGER_CLAIMS"
 
