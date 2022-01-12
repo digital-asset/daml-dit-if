@@ -7,7 +7,7 @@ from aiohttp.typedefs import LooseHeaders
 from daml_dit_api import DamlModelInfo
 from dazl.damlast.lookup import parse_type_con_name
 from dazl.damlast.util import package_ref
-from dazl.protocols.v0.json_ser_command import LedgerJSONEncoder
+from dazl.prim.json import JSONEncoder
 
 LOG = logging.getLogger('daml-dit-if')
 
@@ -28,7 +28,7 @@ def ensure_package_id(daml_model: 'Optional[DamlModelInfo]', template: str) -> s
 
 
 
-DEFAULT_ENCODER = LedgerJSONEncoder()
+DEFAULT_ENCODER = JSONEncoder()
 
 
 def json_response(

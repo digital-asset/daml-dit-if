@@ -3,7 +3,6 @@ from functools import wraps
 from typing import List, Optional, Sequence
 
 from aiohttp import web
-from aiohttp.helpers import sentinel
 from aiohttp.web import RouteTableDef
 from dazl import AIOPartyClient
 

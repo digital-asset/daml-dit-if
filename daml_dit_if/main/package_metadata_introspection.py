@@ -1,9 +1,9 @@
 import sys
-from typing import Dict, Optional
+from typing import Optional
 from zipfile import ZipFile
 
 import yaml
-from dacite import Config, from_dict
+from dacite import from_dict
 from daml_dit_api import (
     DABL_META_NAME,
     DamlModelInfo,

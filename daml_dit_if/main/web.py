@@ -1,9 +1,8 @@
 import re
 from asyncio import ensure_future, gather
-from dataclasses import asdict, dataclass
-from typing import Any, Dict, Optional
+from dataclasses import asdict
+from typing import Optional
 
-from aiohttp import web
 from aiohttp.web import (
     AccessLogger,
     Application,

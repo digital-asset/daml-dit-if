@@ -1,11 +1,8 @@
-import asyncio
 from dataclasses import dataclass
 from typing import Any, Callable, List, Optional, Sequence, Tuple
 
 from daml_dit_api import DamlModelInfo
 from dazl import AIOPartyClient
-from dazl.damlast.lookup import parse_type_con_name
-from dazl.damlast.util import package_ref
 from dazl.model.core import ContractMatch
 from dazl.model.reading import ContractCreateEvent
 from dazl.model.writing import EventHandlerResponse

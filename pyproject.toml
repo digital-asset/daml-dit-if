@@ -23,6 +23,8 @@ pytest = "^5.4.3"
 pytest-asyncio = "*"
 pytest-codestyle = "*"
 isort = "^5.10.1"
+types-PyYAML = "^6.0.3"
+types-setuptools = "^57.4.7"
 
 [tool.poetry.extras]
 develop = []
