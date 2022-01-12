@@ -26,6 +26,10 @@ clean:
 .PHONY: deps
 deps: $(poetry_install_marker)
 
+.PHONY: format
+format:
+	poetry run isort daml_dit_if
+
 .PHONY: publish
 publish: build
 	poetry publish
@@ -46,12 +50,16 @@ version:
 ## TEST TARGETS                                                                                   ##
 ####################################################################################################
 
+.PHONY: format-test
+format-test:
+	poetry run isort daml_dit_if --check-only
+
 .PHONY: typecheck
 typecheck:
 	poetry run python3 -m mypy --config-file pytest.ini  -p daml_dit_if
 
 .PHONY: test
-test: typecheck
+test: format-test typecheck
 
 
 ####################################################################################################

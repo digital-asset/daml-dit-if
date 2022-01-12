@@ -1,6 +1,6 @@
+import json
 from asyncio import shield, sleep
 from datetime import timedelta
-import json
 from typing import TYPE_CHECKING, Any, Collection, Mapping, Optional, Union
 
 from aiohttp import ClientSession
@@ -9,7 +9,6 @@ if TYPE_CHECKING:
     from jwcrypto.jwk import JWK
 
 from .log import LOG
-
 
 DEFAULT_POLL_INTERVAL = timedelta(seconds=10)
 IAT_SKEW = timedelta(seconds=15)

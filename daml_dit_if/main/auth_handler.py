@@ -2,27 +2,18 @@ from typing import Any, Awaitable, Callable, Mapping, Optional, TypeVar
 
 from aiohttp.web import Application, Request, Response
 from aiohttp.web_middlewares import middleware
-
 from jwcrypto.common import JWException
 
-from .log import LOG
-
+from ..api import AuthorizationLevel
+from ..api.common import forbidden_response, unauthorized_response
+from .auth_accessors import (
+    DABL_JWT_LEDGER_CLAIMS,
+    get_configured_integration_ledger_claims,
+    is_integration_party_ledger_claim,
+)
 from .config import Configuration
 from .jwt import JWTValidator
-
-from ..api import \
-    AuthorizationLevel
-
-from ..api.common import \
-    forbidden_response, \
-    unauthorized_response
-
-
-from .auth_accessors import \
-    DABL_JWT_LEDGER_CLAIMS, \
-    is_integration_party_ledger_claim, \
-    get_configured_integration_ledger_claims
-
+from .log import LOG
 
 Handler = Callable[[Request], Awaitable[Response]]
 

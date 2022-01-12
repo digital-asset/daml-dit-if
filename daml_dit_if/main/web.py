@@ -1,23 +1,33 @@
 import re
-from typing import Any, Dict, Optional
-
 from asyncio import ensure_future, gather
 from dataclasses import asdict, dataclass
+from typing import Any, Dict, Optional
 
 from aiohttp import web
-from aiohttp.web import Application, AccessLogger, AppRunner, BaseRequest, TCPSite, RouteTableDef, \
-    Request, Response, StreamResponse
+from aiohttp.web import (
+    AccessLogger,
+    Application,
+    AppRunner,
+    BaseRequest,
+    Request,
+    Response,
+    RouteTableDef,
+    StreamResponse,
+    TCPSite,
+)
 
-
-from .log import \
-    is_debug_enabled, LOG, get_log_level, get_log_level_options, set_log_level
-
+from ..api import json_response
+from .auth_handler import AuthHandler, AuthorizationLevel, auth_level
 from .config import Configuration
 from .integration_context import IntegrationContext
 from .jwt import JWTValidator
-from .auth_handler import AuthHandler, auth_level, AuthorizationLevel
-
-from ..api import json_response
+from .log import (
+    LOG,
+    get_log_level,
+    get_log_level_options,
+    is_debug_enabled,
+    set_log_level,
+)
 
 # cap aiohttp to allow a maximum of 100 MB for the size of a body.
 CLIENT_MAX_SIZE = 100 * (1024 ** 2)

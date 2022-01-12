@@ -1,37 +1,33 @@
 import asyncio
 import base64
 import logging
-import pkg_resources
 import sys
-import yaml
-
+from asyncio import ensure_future, gather, get_event_loop
 from dataclasses import dataclass
 from pathlib import Path
-from asyncio import ensure_future, gather, get_event_loop
-from typing import Optional, Dict
-from dacite import from_dict
+from typing import Dict, Optional
 
+import pkg_resources
+import yaml
 from aiohttp import ClientSession
+from aiohttp.web import (
+    Application,
+    AppRunner,
+    Request,
+    Response,
+    RouteTableDef,
+    TCPSite,
+)
+from dacite import from_dict
+from daml_dit_api import IntegrationRuntimeSpec, IntegrationTypeInfo, PackageMetadata
+from dazl import Network
 from yarl import URL
 
-from aiohttp.web import Application, AppRunner, TCPSite, RouteTableDef, \
-    Request, Response
-
-from dazl import Network
-
-from daml_dit_api import \
-    IntegrationRuntimeSpec, \
-    IntegrationTypeInfo, \
-    PackageMetadata
-
 from .config import Configuration, get_default_config
-
-from .log import FAIL, LOG, setup_default_logging, set_log_level
-
-from .web import start_web_endpoint
-
 from .integration_context import IntegrationContext
+from .log import FAIL, LOG, set_log_level, setup_default_logging
 from .package_metadata_introspection import get_package_metadata
+from .web import start_web_endpoint
 
 
 def load_integration_spec(config: 'Configuration') -> 'Optional[IntegrationRuntimeSpec]':

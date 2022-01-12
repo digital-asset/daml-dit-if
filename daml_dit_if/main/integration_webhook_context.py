@@ -1,27 +1,23 @@
 from dataclasses import dataclass
-from typing import List, Optional, Sequence
 from functools import wraps
+from typing import List, Optional, Sequence
 
 from aiohttp import web
-from aiohttp.web import RouteTableDef
 from aiohttp.helpers import sentinel
-
+from aiohttp.web import RouteTableDef
 from dazl import AIOPartyClient
 
-from .common import \
-    InvocationStatus, \
-    without_return_value, \
-    as_handler_invocation
-
-from ..api import \
-    AuthorizationLevel, \
-    IntegrationWebhookRoutes, \
-    IntegrationWebhookResponse, \
-    json_response
-
-from .log import LOG
+from ..api import (
+    AuthorizationLevel,
+    IntegrationWebhookResponse,
+    IntegrationWebhookRoutes,
+    json_response,
+)
 from .auth_handler import set_handler_auth
+from .common import InvocationStatus, as_handler_invocation, without_return_value
 from .integration_deferral_queue import IntegrationDeferralQueue
+from .log import LOG
+
 
 def empty_success_response() -> 'web.HTTPOk':
     return web.HTTPOk()

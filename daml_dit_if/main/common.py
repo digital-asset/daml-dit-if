@@ -1,6 +1,5 @@
-import sys
 import collections
-
+import sys
 from asyncio import wait_for
 from dataclasses import dataclass
 from datetime import datetime
@@ -10,9 +9,7 @@ from typing import Optional
 from dazl import AIOPartyClient
 
 from ..api import IntegrationResponse
-
 from .log import LOG
-
 
 
 @dataclass(frozen=True)

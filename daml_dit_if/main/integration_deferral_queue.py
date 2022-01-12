@@ -1,14 +1,10 @@
 import asyncio
-
 from dataclasses import dataclass
-
 from typing import Callable
 
-from .log import LOG
-
 from .common import IntegrationQueueStatus, InvocationStatus
-
 from .config import Configuration
+from .log import LOG
 
 DeferredAction = Callable[[], None]
 

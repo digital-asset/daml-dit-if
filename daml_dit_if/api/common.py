@@ -1,16 +1,13 @@
 import logging
-
 from typing import Any, Optional
 
+from aiohttp import web
+from aiohttp.helpers import sentinel
+from aiohttp.typedefs import LooseHeaders
+from daml_dit_api import DamlModelInfo
 from dazl.damlast.lookup import parse_type_con_name
 from dazl.damlast.util import package_ref
-
-from daml_dit_api import DamlModelInfo
-
-from aiohttp import web
-from aiohttp.typedefs import LooseHeaders
 from dazl.protocols.v0.json_ser_command import LedgerJSONEncoder
-from aiohttp.helpers import sentinel
 
 LOG = logging.getLogger('daml-dit-if')
 
