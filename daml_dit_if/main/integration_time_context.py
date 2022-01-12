@@ -1,8 +1,7 @@
 import asyncio
-from dataclasses import dataclass
 from typing import Callable, List, Optional, Sequence, Tuple
 
-from dazl import AIOPartyClient, Command
+from dazl import AIOPartyClient
 
 from ..api import IntegrationTimeEvents
 from .common import InvocationStatus, as_handler_invocation, without_return_value

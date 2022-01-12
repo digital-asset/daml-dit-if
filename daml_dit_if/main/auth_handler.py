@@ -1,4 +1,4 @@
-from typing import Any, Awaitable, Callable, Mapping, Optional, TypeVar
+from typing import Awaitable, Callable, Optional
 
 from aiohttp.web import Application, Request, Response
 from aiohttp.web_middlewares import middleware

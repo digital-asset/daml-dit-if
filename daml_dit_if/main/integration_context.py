@@ -1,14 +1,10 @@
 import asyncio
-import os
 import sys
 from dataclasses import dataclass
 from datetime import datetime
-from functools import wraps
 from importlib import import_module
-from types import ModuleType
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type
+from typing import Any, Optional, Sequence, Type
 
-import yaml
 from dacite import Config, from_dict
 from daml_dit_api import (
     METADATA_COMMON_RUN_AS_PARTY,
@@ -19,8 +15,8 @@ from daml_dit_api import (
     IntegrationTypeInfo,
     PackageMetadata,
 )
-from dazl import AIOPartyClient, Command, Network
-from dazl.util.prim_types import to_boolean
+from dazl import Network
+from dazl.prim import to_bool as to_boolean
 
 from ..api import IntegrationEntryPoint, IntegrationEnvironment, IntegrationEvents
 from .common import (
