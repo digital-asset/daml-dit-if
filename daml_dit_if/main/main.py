@@ -23,7 +23,7 @@ from daml_dit_api import IntegrationRuntimeSpec, IntegrationTypeInfo, PackageMet
 from dazl import Network
 from yarl import URL
 
-from .config import Configuration, get_default_config
+from .config import Configuration, get_default_config, optenv
 from .integration_context import IntegrationContext
 from .log import FAIL, LOG, set_log_level, setup_default_logging
 from .package_metadata_introspection import get_package_metadata
@@ -50,8 +50,9 @@ def load_integration_spec(config: 'Configuration') -> 'Optional[IntegrationRunti
 
 
 def create_network(url: str) -> 'Network':
+    token = optenv("DAML_LEDGER_TOKEN")
     network = Network()
-    network.set_config(url=url)
+    network.set_config(url=url, oath_token=token)
     return network
 
 

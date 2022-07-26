@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "daml-dit-if"
-version = "0.6.6"
+version = "0.6.7"
 description = "Daml Hub Integration Framework"
 authors = ["Mike Schaeffer <mike.schaeffer@digitalasset.com>"]
 readme = "README.md"
@@ -16,6 +16,7 @@ pyyaml = "^5"
 dazl = "^7"
 daml-dit-api = "0.4.3"
 jwcrypto = "0.9.1"
+google-auth = "*"
 
 [tool.poetry.dev-dependencies]
 mypy = "*"
