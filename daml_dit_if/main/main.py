@@ -51,8 +51,9 @@ def load_integration_spec(config: 'Configuration') -> 'Optional[IntegrationRunti
 
 def create_network(url: str) -> 'Network':
     token = optenv("DAML_LEDGER_TOKEN")
+    app_name = optenv("DAML_LEDGER_APPLICATION_NAME")
     network = Network()
-    network.set_config(url=url, oauth_token=token)
+    network.set_config(url=url, oauth_token=token, application_name=app_name)
     return network
 
 
