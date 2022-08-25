@@ -21,7 +21,6 @@ Handler = Callable[[Request], Awaitable[Response]]
 DABL_AUTH_LEVEL = "__dabl_auth_level__"
 
 
-
 def set_handler_auth(fn: "Handler", auth: "AuthorizationLevel") -> "Handler":
     """
     Mark a request handler as not requiring authentication.
@@ -32,15 +31,16 @@ def set_handler_auth(fn: "Handler", auth: "AuthorizationLevel") -> "Handler":
 
 
 def auth_level(auth: "AuthorizationLevel") -> "Callable[[Handler], Handler]":
-
     def set(fn: "Handler") -> "Handler":
         return set_handler_auth(fn, auth)
 
     return set
 
 
-def get_handler_auth_level(request: "Request") -> 'AuthorizationLevel':
-    return getattr(request.match_info.handler, DABL_AUTH_LEVEL, AuthorizationLevel.PUBLIC)
+def get_handler_auth_level(request: "Request") -> "AuthorizationLevel":
+    return getattr(
+        request.match_info.handler, DABL_AUTH_LEVEL, AuthorizationLevel.PUBLIC
+    )
 
 
 def _unvalidated_get_token(request: "Request") -> "Optional[str]":
@@ -63,7 +63,7 @@ def _unvalidated_get_token(request: "Request") -> "Optional[str]":
 
 
 class AuthHandler:
-    def __init__(self, config: 'Configuration', jwt_decoder: 'Optional[JWTValidator]'):
+    def __init__(self, config: "Configuration", jwt_decoder: "Optional[JWTValidator]"):
         self.config = config
         self.jwt_decoder = jwt_decoder
 
@@ -99,17 +99,21 @@ class AuthHandler:
                     "invalid_token", "this endpoint was presented with an invalid token"
                 )
 
-            ledger_claims = get_configured_integration_ledger_claims(self.config, claims)
+            ledger_claims = get_configured_integration_ledger_claims(
+                self.config, claims
+            )
 
             if ledger_claims is None:
                 raise unauthorized_response(
                     "missing_ledger_claims",
                     "this endpoint requires a valid token containing DAML ledger API claims"
-                    f" for ledger ID \"{self.config.ledger_id}\"" ,
+                    f' for ledger ID "{self.config.ledger_id}"',
                 )
 
-            if auth_level == AuthorizationLevel.INTEGRATION_PARTY and \
-               not is_integration_party_ledger_claim(self.config, ledger_claims):
+            if (
+                auth_level == AuthorizationLevel.INTEGRATION_PARTY
+                and not is_integration_party_ledger_claim(self.config, ledger_claims)
+            ):
 
                 raise unauthorized_response(
                     "unauthorized",

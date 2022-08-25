@@ -12,11 +12,11 @@ import typing
 _level = 0
 
 
-LOG = logging.getLogger('daml-dit-if')
+LOG = logging.getLogger("daml-dit-if")
 
 
 def FAIL(message: str) -> typing.NoReturn:
-    LOG.error(f'=== FATAL ERROR: {message} ===')
+    LOG.error(f"=== FATAL ERROR: {message} ===")
 
     sys.exit(9)
 
@@ -26,8 +26,9 @@ def setup_default_logging():
 
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s [%(levelname)s] (%(name)s) %(message)s',
-        datefmt='%Y-%m-%dT%H:%M:%S%z')
+        format="%(asctime)s [%(levelname)s] (%(name)s) %(message)s",
+        datefmt="%Y-%m-%dT%H:%M:%S%z",
+    )
 
     set_log_level(0)
 
@@ -46,31 +47,30 @@ def set_log_level(level):
     global _level
 
     if level < 0 or level > 50:
-        FAIL(f'Requested log level, {level}, is out of the valid range [0,50].')
+        FAIL(f"Requested log level, {level}, is out of the valid range [0,50].")
 
     if level > 0 or _level > 0:
-        LOG.info(f'Updating log level to {level}')
+        LOG.info(f"Updating log level to {level}")
 
-    logging.getLogger('integration').setLevel(
-        logging.DEBUG if level >= 10 else logging.INFO)
+    logging.getLogger("integration").setLevel(
+        logging.DEBUG if level >= 10 else logging.INFO
+    )
 
-    logging.getLogger('daml-dit-if').setLevel(
-        logging.DEBUG if level >= 20 else logging.INFO)
+    logging.getLogger("daml-dit-if").setLevel(
+        logging.DEBUG if level >= 20 else logging.INFO
+    )
 
-    logging.getLogger('dazl').setLevel(
-        logging.DEBUG if level >= 40 else logging.INFO)
+    logging.getLogger("dazl").setLevel(logging.DEBUG if level >= 40 else logging.INFO)
 
-    logging.getLogger().setLevel(
-        logging.DEBUG if level >= 40 else logging.INFO)
+    logging.getLogger().setLevel(logging.DEBUG if level >= 40 else logging.INFO)
 
     _level = level
 
 
 def get_log_level_options():
     return [
-        { 'label': 'Runtime', 'value': 0  },
-        { 'label': 'Low'    , 'value': 10 },
-        { 'label': 'High'   , 'value': 20 },
-        { 'label': 'All'    , 'value': 50 },
+        {"label": "Runtime", "value": 0},
+        {"label": "Low", "value": 10},
+        {"label": "High", "value": 20},
+        {"label": "All", "value": 50},
     ]
-

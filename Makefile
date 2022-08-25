@@ -29,6 +29,7 @@ deps: $(poetry_install_marker)
 .PHONY: format
 format:
 	poetry run isort daml_dit_if
+	poetry run black daml_dit_if
 
 .PHONY: publish
 publish: build
@@ -53,6 +54,7 @@ version:
 .PHONY: format-test
 format-test:
 	poetry run isort daml_dit_if --check-only
+	poetry run black daml_dit_if . --check --extend-exclude='^/target'
 
 .PHONY: typecheck
 typecheck:
