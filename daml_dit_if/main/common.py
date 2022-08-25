@@ -23,15 +23,15 @@ class IntegrationQueueStatus:
 @dataclass
 class InvocationStatus:
     index: int
-    label: 'Optional[str]'
+    label: "Optional[str]"
     command_count: int
     use_count: int
     error_count: int
-    error_message: 'Optional[str]'
-    error_time: 'Optional[datetime]'
+    error_message: "Optional[str]"
+    error_time: "Optional[datetime]"
+
 
 def without_return_value(fn):
-
     @wraps(fn)
     async def wrapped(*args, **kwargs):
         await fn(*args, **kwargs)
@@ -40,7 +40,6 @@ def without_return_value(fn):
 
 
 def with_marshalling(mfn, fn):
-
     @wraps(fn)
     async def wrapped(arg):
         await fn(mfn(arg))
@@ -49,10 +48,10 @@ def with_marshalling(mfn, fn):
 
 
 def normalize_integration_response(response):
-    LOG.debug('Normalizing integration response: %r', response)
+    LOG.debug("Normalizing integration response: %r", response)
 
     if isinstance(response, IntegrationResponse):
-        LOG.debug('Integration Response passthrough')
+        LOG.debug("Integration Response passthrough")
         return response
 
     commands = []
@@ -63,31 +62,32 @@ def normalize_integration_response(response):
     else:
         commands = []
 
-    LOG.debug('Integration response with ledger commands: %r', commands)
+    LOG.debug("Integration response with ledger commands: %r", commands)
 
     return IntegrationResponse(commands=commands)
 
 
-def as_handler_invocation(client: 'AIOPartyClient', inv_status: 'InvocationStatus', fn):
+def as_handler_invocation(client: "AIOPartyClient", inv_status: "InvocationStatus", fn):
     @wraps(fn)
     async def wrapped(*args, **kwargs):
-        LOG.debug('Invoking for invocation status: %r', inv_status)
+        LOG.debug("Invoking for invocation status: %r", inv_status)
         inv_status.use_count += 1
 
         response = None
         try:
-            response = normalize_integration_response(
-                await fn(*args, **kwargs))
+            response = normalize_integration_response(await fn(*args, **kwargs))
 
             if response.commands:
-                LOG.debug('Submitting ledger commands (timeout=%r sec): %r',
-                          response.command_timeout, response.commands)
+                LOG.debug(
+                    "Submitting ledger commands (timeout=%r sec): %r",
+                    response.command_timeout,
+                    response.commands,
+                )
 
                 inv_status.command_count += len(response.commands)
 
                 await wait_for(
-                    client.submit(response.commands),
-                    response.command_timeout
+                    client.submit(response.commands), response.command_timeout
                 )
 
             return response
@@ -96,6 +96,6 @@ def as_handler_invocation(client: 'AIOPartyClient', inv_status: 'InvocationStatu
             inv_status.error_count += 1
             inv_status.error_message = repr(sys.exc_info()[1])
             inv_status.error_time = datetime.utcnow()
-            LOG.exception('Error while processing: ' + inv_status.error_message)
+            LOG.exception("Error while processing: " + inv_status.error_message)
 
     return wrapped

@@ -25,6 +25,7 @@ pytest-codestyle = "*"
 isort = "^5.10.1"
 types-PyYAML = "^6.0.3"
 types-setuptools = "^57.4.7"
+black = "^22.6.0"
 
 [tool.poetry.extras]
 develop = []

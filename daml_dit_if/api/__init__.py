@@ -24,7 +24,7 @@ from .common import (
 )
 
 
-def _empty_commands() -> 'Sequence[Command]':
+def _empty_commands() -> "Sequence[Command]":
     return list()
 
 
@@ -34,14 +34,14 @@ class IntegrationResponse:
     Response to an integration event. All such responses contain
     a sequence of zero or more ledger commands to issue.
     """
-    commands: 'Optional[Sequence[Command]]' = field(default_factory=_empty_commands)
-    command_timeout: 'int' = 5
+
+    commands: "Optional[Sequence[Command]]" = field(default_factory=_empty_commands)
+    command_timeout: "int" = 5
 
 
 class IntegrationQueueSink:
-
     @abc.abstractmethod
-    async def put(self, message: 'Any', queue_name: 'str' = 'default'):
+    async def put(self, message: "Any", queue_name: "str" = "default"):
         """
         Put a message onto the internal message queue with the given
         name. Throws an exception if there is no queue of that name.
@@ -50,9 +50,8 @@ class IntegrationQueueSink:
 
 
 class IntegrationQueueEvents:
-
     @abc.abstractmethod
-    def message(self, queue_name: 'str' = 'default'):
+    def message(self, queue_name: "str" = "default"):
         """
         Register a function as a handler for internal queue message events.
         The function will be invoked for each message placed on the message
@@ -65,9 +64,8 @@ class IntegrationQueueEvents:
 
 
 class IntegrationTimeEvents:
-
     @abc.abstractmethod
-    def periodic_interval(self, seconds, label: 'Optional[str]' = None):
+    def periodic_interval(self, seconds, label: "Optional[str]" = None):
         """
         Register a function as a handler for periodic timer events. The
         function will be scheduled to run at the specified
@@ -84,6 +82,7 @@ class IntegrationLedgerContractEvent:
     Base class for ledger integration events related to actions taken
     on contracts.
     """
+
     cid: ContractId
 
 
@@ -98,6 +97,7 @@ class IntegrationLedgerContractCreateEvent(IntegrationLedgerContractEvent):
     in the integration's event stream spans this event and the corresponding
     :class:`IntegrationLedgerContractArchiveEvent` for the CID.
     """
+
     initial: bool
     cdata: ContractData
 
@@ -117,9 +117,10 @@ class IntegrationLedgerTransactionEvent:
     """
     Base class for transaction boundary events.
     """
+
     command_id: str
     workflow_id: str
-    contract_events: 'Sequence[IntegrationLedgerContractEvent]'
+    contract_events: "Sequence[IntegrationLedgerContractEvent]"
 
 
 @dataclass(frozen=True)
@@ -141,7 +142,6 @@ class IntegrationLedgerTransactionEndEvent(IntegrationLedgerTransactionEvent):
 
 
 class IntegrationLedgerEvents:
-
     @abc.abstractmethod
     def ledger_init(self):
         """
@@ -178,8 +178,13 @@ class IntegrationLedgerEvents:
         """
 
     @abc.abstractmethod
-    def contract_created(self, template: Any, match: 'Optional[ContractMatch]' = None,
-                         sweep: bool = True, flow: bool = True):
+    def contract_created(
+        self,
+        template: Any,
+        match: "Optional[ContractMatch]" = None,
+        sweep: bool = True,
+        flow: bool = True,
+    ):
         """
         Register a callback to be invoked when the integration encounters a newly created
         contract instance of a template.
@@ -200,7 +205,7 @@ class IntegrationLedgerEvents:
         """
 
     @abc.abstractmethod
-    def contract_archived(self, template: Any, match: 'Optional[ContractMatch]' = None):
+    def contract_archived(self, template: Any, match: "Optional[ContractMatch]" = None):
         """
         Decorator for registering a callback to be invoked when the integration
         encounters a newly archived contract instance of a template.
@@ -220,13 +225,13 @@ class IntegrationWebhookResponse(IntegrationResponse):
     HTTP response.
     """
 
-    response: 'Optional[Response]' = None
+    response: "Optional[Response]" = None
 
     json_response: Any = sentinel
-    text_response: 'Optional[str]' = None
-    blob_response: 'Optional[bytes]' = None
+    text_response: "Optional[str]" = None
+    blob_response: "Optional[bytes]" = None
 
-    http_content_type: 'Optional[str]' = None
+    http_content_type: "Optional[str]" = None
     http_status: int = 200
 
 
@@ -237,10 +242,13 @@ class AuthorizationLevel(Enum):
 
 
 class IntegrationWebhookRoutes:
-
     @abc.abstractmethod
-    def post(self, url_suffix: 'Optional[str]' = None, label: 'Optional[str]' = None,
-             auth: 'Optional[AuthorizationLevel]' = AuthorizationLevel.PUBLIC):
+    def post(
+        self,
+        url_suffix: "Optional[str]" = None,
+        label: "Optional[str]" = None,
+        auth: "Optional[AuthorizationLevel]" = AuthorizationLevel.PUBLIC,
+    ):
         """
         Register a function as an HTTP POST handler for the integration's webhook.
         Integration HTTP handlers must return an instance of
@@ -256,8 +264,12 @@ class IntegrationWebhookRoutes:
         """
 
     @abc.abstractmethod
-    def get(self, url_suffix: 'Optional[str]' = None, label: 'Optional[str]' = None,
-             auth: 'Optional[AuthorizationLevel]' = AuthorizationLevel.PUBLIC):
+    def get(
+        self,
+        url_suffix: "Optional[str]" = None,
+        label: "Optional[str]" = None,
+        auth: "Optional[AuthorizationLevel]" = AuthorizationLevel.PUBLIC,
+    ):
         """
         Register a function as an HTTP GET handler for the integration's webhook.
         Integration HTTP handlers must return an instance of
@@ -275,23 +287,24 @@ class IntegrationWebhookRoutes:
 
 @dataclass
 class IntegrationEvents:
-    queue: 'IntegrationQueueEvents'
-    time: 'IntegrationTimeEvents'
-    ledger: 'IntegrationLedgerEvents'
-    webhook: 'IntegrationWebhookRoutes'
+    queue: "IntegrationQueueEvents"
+    time: "IntegrationTimeEvents"
+    ledger: "IntegrationLedgerEvents"
+    webhook: "IntegrationWebhookRoutes"
 
 
 @dataclass
 class IntegrationEnvironment:
-    queue: 'IntegrationQueueSink'
+    queue: "IntegrationQueueSink"
     party: str
-    daml_model: 'Optional[DamlModelInfo]'
+    daml_model: "Optional[DamlModelInfo]"
 
     def tid(self, template_id: str) -> str:
         return ensure_package_id(self.daml_model, template_id)
 
-IntegrationEntryPoint = \
-    Callable[[IntegrationEnvironment, IntegrationEvents], None]
+
+IntegrationEntryPoint = Callable[[IntegrationEnvironment, IntegrationEvents], None]
+
 
 def getIntegrationLogger():
-    return logging.getLogger('integration')
+    return logging.getLogger("integration")

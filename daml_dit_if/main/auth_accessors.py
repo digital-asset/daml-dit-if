@@ -10,7 +10,8 @@ DABL_JWT_LEDGER_CLAIMS = "DABL_JWT_LEDGER_CLAIMS"
 
 
 def get_configured_integration_ledger_claims(
-        config: 'Configuration', claims: "JWTClaims") -> "Optional[JWTClaims]":
+    config: "Configuration", claims: "JWTClaims"
+) -> "Optional[JWTClaims]":
 
     """
     Given an IF configuration and a dict of claims from a DAML Ledger
@@ -19,31 +20,35 @@ def get_configured_integration_ledger_claims(
     other ledger ID's have no power here.
     """
 
-    ledger_claims = claims.get('https://daml.com/ledger-api')
+    ledger_claims = claims.get("https://daml.com/ledger-api")
 
-    LOG.debug('ledger_claims: %r', ledger_claims)
+    LOG.debug("ledger_claims: %r", ledger_claims)
 
     if ledger_claims is None:
         return None
 
-    claimed_ledger_id = ledger_claims.get('ledgerId', 'missing-ledger-id-claim')
+    claimed_ledger_id = ledger_claims.get("ledgerId", "missing-ledger-id-claim")
 
     if claimed_ledger_id != config.ledger_id:
-        LOG.debug(f'Ledger ID mismatch in claims: {claimed_ledger_id} != {config.ledger_id}')
+        LOG.debug(
+            f"Ledger ID mismatch in claims: {claimed_ledger_id} != {config.ledger_id}"
+        )
         return None
 
     return ledger_claims
 
 
-def is_integration_party_ledger_claim(config: "Configuration", ledger_claims: "JWTClaims") -> bool:
+def is_integration_party_ledger_claim(
+    config: "Configuration", ledger_claims: "JWTClaims"
+) -> bool:
     """
     Given an IF configuration and a dict of DAML ledger claims from
     a token, determine if the configured integration party is included
     in the ledger claims. For a token to claim the integration party, the
     token must claim the party in both the 'readAs' and 'actAs' sections.
     """
-    read_as_parties = ledger_claims.get('readAs', [])
-    act_as_parties = ledger_claims.get('actAs', [])
+    read_as_parties = ledger_claims.get("readAs", [])
+    act_as_parties = ledger_claims.get("actAs", [])
 
     party = config.run_as_party
 
@@ -53,7 +58,7 @@ def is_integration_party_ledger_claim(config: "Configuration", ledger_claims: "J
     return party in read_as_parties and party in act_as_parties
 
 
-def get_request_claims(request: 'Request'):
+def get_request_claims(request: "Request"):
     """
     Return the DAML ledger claims for the request's JWT token. If there
     are no such claims, or the token has not been extracted (as in a
@@ -62,7 +67,7 @@ def get_request_claims(request: 'Request'):
     return request.get(DABL_JWT_LEDGER_CLAIMS, None)
 
 
-def get_request_parties(request: 'Request'):
+def get_request_parties(request: "Request"):
     """
     Get the DAML ledger parties identified in the current request's JWT
     token. The parties returned by this function are the parties that
@@ -75,13 +80,13 @@ def get_request_parties(request: 'Request'):
     if ledger_claims is None:
         return []
 
-    read_as_parties = ledger_claims.get('readAs', [])
-    act_as_parties = ledger_claims.get('actAs', [])
+    read_as_parties = ledger_claims.get("readAs", [])
+    act_as_parties = ledger_claims.get("actAs", [])
 
     return list(set(read_as_parties).intersection(set(act_as_parties)))
 
 
-def get_single_request_party(request: 'Request'):
+def get_single_request_party(request: "Request"):
     """
     Returns the single DAML ledger party identified in the current request's
     JWT. For a party to be returned by this function, it must appear in _both_
@@ -96,6 +101,6 @@ def get_single_request_party(request: 'Request'):
         if len(parties) == 1:
             return parties[0]
         else:
-            raise Exception(f'Only one ledger party expected in token: {parties}')
+            raise Exception(f"Only one ledger party expected in token: {parties}")
 
     return None
