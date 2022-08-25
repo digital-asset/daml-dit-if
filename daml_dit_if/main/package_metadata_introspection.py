@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 from typing import Optional
 from zipfile import ZipFile
@@ -15,7 +17,7 @@ from .config import Configuration
 from .log import LOG
 
 
-def _get_local_dabl_meta(config: "Configuration") -> "Optional[str]":
+def _get_local_dabl_meta(config: Configuration) -> Optional[str]:
     dit_meta_path = config.dit_meta_path
 
     LOG.debug("Attmpting to load DABL metadata from local file: %r", dit_meta_path)
@@ -28,7 +30,7 @@ def _get_local_dabl_meta(config: "Configuration") -> "Optional[str]":
         return None
 
 
-def _get_pex_dabl_meta() -> "Optional[str]":
+def _get_pex_dabl_meta() -> Optional[str]:
     pex_filename = sys.argv[0]
 
     LOG.debug("Attmpting to load DABL metadata from PEX file: %r", pex_filename)
@@ -45,7 +47,7 @@ def _get_pex_dabl_meta() -> "Optional[str]":
         return None
 
 
-def get_package_metadata(config: "Configuration") -> "PackageMetadata":
+def get_package_metadata(config: Configuration) -> PackageMetadata:
     dabl_meta = _get_pex_dabl_meta() or _get_local_dabl_meta(config)
 
     if dabl_meta:

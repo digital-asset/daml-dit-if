@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Awaitable, Callable, Optional
 
 from aiohttp.web import Application, Request, Response
@@ -21,7 +23,7 @@ Handler = Callable[[Request], Awaitable[Response]]
 DABL_AUTH_LEVEL = "__dabl_auth_level__"
 
 
-def set_handler_auth(fn: "Handler", auth: "AuthorizationLevel") -> "Handler":
+def set_handler_auth(fn: Handler, auth: AuthorizationLevel) -> Handler:
     """
     Mark a request handler as not requiring authentication.
     """
@@ -30,20 +32,20 @@ def set_handler_auth(fn: "Handler", auth: "AuthorizationLevel") -> "Handler":
     return fn
 
 
-def auth_level(auth: "AuthorizationLevel") -> "Callable[[Handler], Handler]":
+def auth_level(auth: AuthorizationLevel) -> Callable[[Handler], Handler]:
     def set(fn: "Handler") -> "Handler":
         return set_handler_auth(fn, auth)
 
     return set
 
 
-def get_handler_auth_level(request: "Request") -> "AuthorizationLevel":
+def get_handler_auth_level(request: Request) -> AuthorizationLevel:
     return getattr(
         request.match_info.handler, DABL_AUTH_LEVEL, AuthorizationLevel.PUBLIC
     )
 
 
-def _unvalidated_get_token(request: "Request") -> "Optional[str]":
+def _unvalidated_get_token(request: Request) -> Optional[str]:
     header_identity = request.headers.get("Authorization")  # type: Optional[str]
     if header_identity is not None:
         scheme, _, bearer_token = header_identity.partition(" ")
@@ -63,15 +65,15 @@ def _unvalidated_get_token(request: "Request") -> "Optional[str]":
 
 
 class AuthHandler:
-    def __init__(self, config: "Configuration", jwt_decoder: "Optional[JWTValidator]"):
+    def __init__(self, config: Configuration, jwt_decoder: Optional[JWTValidator]):
         self.config = config
         self.jwt_decoder = jwt_decoder
 
-    async def setup(self, app: "Application") -> None:
+    async def setup(self, app: Application) -> None:
         app.middlewares.append(self.auth_middleware)
 
     @middleware
-    async def auth_middleware(self, request: "Request", handler):
+    async def auth_middleware(self, request: Request, handler):
         LOG.debug("in auth middleware for request %s", request)
 
         auth_level = get_handler_auth_level(request)

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from dataclasses import asdict, dataclass
 from typing import Optional
@@ -21,7 +23,7 @@ class Configuration:
     queue_size: int
 
 
-def optenv(var: str) -> "Optional[str]":
+def optenv(var: str) -> Optional[str]:
     val = os.getenv(var)
 
     LOG.debug("Configuration environment lookup: %r => %r", var, val)
@@ -29,7 +31,7 @@ def optenv(var: str) -> "Optional[str]":
     return val
 
 
-def env(var: str, default: "Optional[str]" = None) -> str:
+def env(var: str, default: Optional[str] = None) -> str:
     val = optenv(var)
 
     if val:
@@ -46,7 +48,7 @@ def env(var: str, default: "Optional[str]" = None) -> str:
         return ""  # unreached
 
 
-def envint(var: str, default: "Optional[int]" = None) -> int:
+def envint(var: str, default: Optional[int] = None) -> int:
     val = env(var, None if default is None else str(default))
 
     try:
@@ -55,7 +57,7 @@ def envint(var: str, default: "Optional[int]" = None) -> int:
         FAIL(f"Invalid integer {val} in environment variable: {var}")
 
 
-def get_default_config() -> "Configuration":
+def get_default_config() -> Configuration:
     config = Configuration(
         health_port=envint("DABL_HEALTH_PORT", 8089),
         ledger_url=env("DABL_LEDGER_URL", "http://localhost:6865"),

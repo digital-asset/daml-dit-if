@@ -26,7 +26,7 @@ from .common import (
 )
 
 
-def _empty_commands() -> "Sequence[Command]":
+def _empty_commands() -> Sequence[Command]:
     return list()
 
 
@@ -44,7 +44,7 @@ class IntegrationResponse:
 
 class IntegrationQueueSink:
     @abc.abstractmethod
-    async def put(self, message: "Any", queue_name: "str" = "default"):
+    async def put(self, message: Any, queue_name: str = "default"):
         """
         Put a message onto the internal message queue with the given
         name. Throws an exception if there is no queue of that name.
@@ -54,7 +54,7 @@ class IntegrationQueueSink:
 
 class IntegrationQueueEvents:
     @abc.abstractmethod
-    def message(self, queue_name: "str" = "default"):
+    def message(self, queue_name: str = "default"):
         """
         Register a function as a handler for internal queue message events.
         The function will be invoked for each message placed on the message
@@ -68,7 +68,7 @@ class IntegrationQueueEvents:
 
 class IntegrationTimeEvents:
     @abc.abstractmethod
-    def periodic_interval(self, seconds, label: "Optional[str]" = None):
+    def periodic_interval(self, seconds, label: Optional[str] = None):
         """
         Register a function as a handler for periodic timer events. The
         function will be scheduled to run at the specified
@@ -123,7 +123,7 @@ class IntegrationLedgerTransactionEvent:
 
     command_id: str
     workflow_id: str
-    contract_events: "Sequence[IntegrationLedgerContractEvent]"
+    contract_events: Sequence[IntegrationLedgerContractEvent]
 
 
 @dataclass(frozen=True)
@@ -184,7 +184,7 @@ class IntegrationLedgerEvents:
     def contract_created(
         self,
         template: Any,
-        match: "Optional[ContractMatch]" = None,
+        match: Optional[ContractMatch] = None,
         sweep: bool = True,
         flow: bool = True,
     ):
@@ -208,7 +208,7 @@ class IntegrationLedgerEvents:
         """
 
     @abc.abstractmethod
-    def contract_archived(self, template: Any, match: "Optional[ContractMatch]" = None):
+    def contract_archived(self, template: Any, match: Optional[ContractMatch] = None):
         """
         Decorator for registering a callback to be invoked when the integration
         encounters a newly archived contract instance of a template.
@@ -228,13 +228,13 @@ class IntegrationWebhookResponse(IntegrationResponse):
     HTTP response.
     """
 
-    response: "Optional[Response]" = None
+    response: Optional[Response] = None
 
     json_response: Any = sentinel
-    text_response: "Optional[str]" = None
-    blob_response: "Optional[bytes]" = None
+    text_response: Optional[str] = None
+    blob_response: Optional[bytes] = None
 
-    http_content_type: "Optional[str]" = None
+    http_content_type: Optional[str] = None
     http_status: int = 200
 
 
@@ -248,9 +248,9 @@ class IntegrationWebhookRoutes:
     @abc.abstractmethod
     def post(
         self,
-        url_suffix: "Optional[str]" = None,
-        label: "Optional[str]" = None,
-        auth: "Optional[AuthorizationLevel]" = AuthorizationLevel.PUBLIC,
+        url_suffix: Optional[str] = None,
+        label: Optional[str] = None,
+        auth: Optional[AuthorizationLevel] = AuthorizationLevel.PUBLIC,
     ):
         """
         Register a function as an HTTP POST handler for the integration's webhook.
@@ -269,9 +269,9 @@ class IntegrationWebhookRoutes:
     @abc.abstractmethod
     def get(
         self,
-        url_suffix: "Optional[str]" = None,
-        label: "Optional[str]" = None,
-        auth: "Optional[AuthorizationLevel]" = AuthorizationLevel.PUBLIC,
+        url_suffix: Optional[str] = None,
+        label: Optional[str] = None,
+        auth: Optional[AuthorizationLevel] = AuthorizationLevel.PUBLIC,
     ):
         """
         Register a function as an HTTP GET handler for the integration's webhook.
@@ -290,17 +290,17 @@ class IntegrationWebhookRoutes:
 
 @dataclass
 class IntegrationEvents:
-    queue: "IntegrationQueueEvents"
-    time: "IntegrationTimeEvents"
-    ledger: "IntegrationLedgerEvents"
-    webhook: "IntegrationWebhookRoutes"
+    queue: IntegrationQueueEvents
+    time: IntegrationTimeEvents
+    ledger: IntegrationLedgerEvents
+    webhook: IntegrationWebhookRoutes
 
 
 @dataclass
 class IntegrationEnvironment:
-    queue: "IntegrationQueueSink"
+    queue: IntegrationQueueSink
     party: str
-    daml_model: "Optional[DamlModelInfo]"
+    daml_model: Optional[DamlModelInfo]
 
     def tid(self, template_id: str) -> str:
         return ensure_package_id(self.daml_model, template_id)

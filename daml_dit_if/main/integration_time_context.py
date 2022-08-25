@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 from typing import Callable, List, Optional, Sequence, Tuple
 
@@ -12,14 +14,14 @@ IntegrationTimerHandler = Callable[[], None]
 
 
 class IntegrationTimeContext(IntegrationTimeEvents):
-    def __init__(self, queue: "IntegrationDeferralQueue", client: "AIOPartyClient"):
+    def __init__(self, queue: IntegrationDeferralQueue, client: AIOPartyClient):
         self.queue = queue
         self.client = client
         self.intervals = (
             []
         )  # type: List[Tuple[int, IntegrationTimerHandler,InvocationStatus]]
 
-    def periodic_interval(self, seconds, label: "Optional[str]" = None):
+    def periodic_interval(self, seconds, label: Optional[str] = None):
         label_text = label or "Periodic Interval"
 
         def decorator(fn: "IntegrationTimerHandler"):
@@ -71,5 +73,5 @@ class IntegrationTimeContext(IntegrationTimeEvents):
             ]
         )
 
-    def get_status(self) -> "Sequence[InvocationStatus]":
+    def get_status(self) -> Sequence[InvocationStatus]:
         return [status for (_, _, status) in self.intervals]

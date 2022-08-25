@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import sys
 from dataclasses import dataclass
@@ -39,14 +41,14 @@ from .log import FAIL, LOG
 class IntegrationStatus:
     running: bool
     start_time: datetime
-    error_message: "Optional[str]"
-    error_time: "Optional[datetime]"
+    error_message: Optional[str]
+    error_time: Optional[datetime]
     pending_events: int
-    event_queue: "IntegrationQueueStatus"
-    webhooks: "Sequence[WebhookRouteStatus]"
-    ledger_events: "Sequence[LedgerHandlerStatus]"
-    timers: "Sequence[InvocationStatus]"
-    queues: "Sequence[InvocationStatus]"
+    event_queue: IntegrationQueueStatus
+    webhooks: Sequence[WebhookRouteStatus]
+    ledger_events: Sequence[LedgerHandlerStatus]
+    timers: Sequence[InvocationStatus]
+    queues: Sequence[InvocationStatus]
 
 
 def normalize_metadata_field(field_value, field_type_info):
@@ -98,12 +100,12 @@ def parse_qualified_symbol(symbol_text: str):
 class IntegrationContext:
     def __init__(
         self,
-        network: "Network",
-        config: "Configuration",
-        integration_type: "IntegrationTypeInfo",
+        network: Network,
+        config: Configuration,
+        integration_type: IntegrationTypeInfo,
         type_id: str,
-        integration_spec: "IntegrationRuntimeSpec",
-        metadata: "PackageMetadata",
+        integration_spec: IntegrationRuntimeSpec,
+        metadata: PackageMetadata,
     ):
 
         self.start_time = datetime.utcnow()
@@ -152,16 +154,16 @@ class IntegrationContext:
             FAIL("DAML_LEDGER_PARTY environment variable undefined.")
 
     def get_integration_entrypoint(
-        self, integration_type: "IntegrationTypeInfo"
-    ) -> "IntegrationEntryPoint":
+        self, integration_type: IntegrationTypeInfo
+    ) -> IntegrationEntryPoint:
 
         (module, entry_fn_name) = parse_qualified_symbol(integration_type.entrypoint)
 
         return getattr(module, entry_fn_name)
 
     def get_integration_env_class(
-        self, integration_type: "IntegrationTypeInfo"
-    ) -> "Type[IntegrationEnvironment]":
+        self, integration_type: IntegrationTypeInfo
+    ) -> Type[IntegrationEnvironment]:
 
         if integration_type.env_class:
             (module, env_class_name) = parse_qualified_symbol(
@@ -237,7 +239,7 @@ class IntegrationContext:
         self.running = True
         LOG.info("...sweeps procesed, integration started.")
 
-    def get_status(self) -> "IntegrationStatus":
+    def get_status(self) -> IntegrationStatus:
         queue_status = self.queue.get_status()
 
         return IntegrationStatus(

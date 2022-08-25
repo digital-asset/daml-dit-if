@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 from dataclasses import dataclass
 from typing import Callable
@@ -11,12 +13,12 @@ DeferredAction = Callable[[], None]
 
 @dataclass
 class IntegrationQueueAction:
-    action: "DeferredAction"
-    status: "InvocationStatus"
+    action: DeferredAction
+    status: InvocationStatus
 
 
 class IntegrationDeferralQueue:
-    def __init__(self, config: "Configuration"):
+    def __init__(self, config: Configuration):
         self.total_events = 0
         self.skipped_events = 0
         self.queue_size = config.queue_size
@@ -36,7 +38,7 @@ class IntegrationDeferralQueue:
             LOG.error("Work queue overrun, skipping event: %r", status)
             raise
 
-    def get_status(self) -> "IntegrationQueueStatus":
+    def get_status(self) -> IntegrationQueueStatus:
         return IntegrationQueueStatus(
             total_events=self.total_events,
             pending_events=self.queue.qsize(),

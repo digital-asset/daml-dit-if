@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import base64
 import logging
@@ -30,9 +32,7 @@ from .package_metadata_introspection import get_package_metadata
 from .web import start_web_endpoint
 
 
-def load_integration_spec(
-    config: "Configuration",
-) -> "Optional[IntegrationRuntimeSpec]":
+def load_integration_spec(config: Configuration) -> Optional[IntegrationRuntimeSpec]:
     spec_path = Path(config.integration_spec_path)
 
     if spec_path.exists():
@@ -49,7 +49,7 @@ def load_integration_spec(
         return None
 
 
-def create_network(url: str) -> "Network":
+def create_network(url: str) -> Network:
     token = optenv("DAML_LEDGER_TOKEN")
     app_name = optenv("DAML_LEDGER_APPLICATION_NAME")
     network = Network()
@@ -57,7 +57,7 @@ def create_network(url: str) -> "Network":
     return network
 
 
-async def run_dazl_network(network: "Network"):
+async def run_dazl_network(network: Network):
     """
     Run the dazl network, and make sure that fatal dazl errors terminate the application.
     """
@@ -72,11 +72,11 @@ async def run_dazl_network(network: "Network"):
 
 
 async def _aio_main(
-    integration_type: "IntegrationTypeInfo",
-    config: "Configuration",
+    integration_type: IntegrationTypeInfo,
+    config: Configuration,
     type_id: str,
-    integration_spec: "IntegrationRuntimeSpec",
-    metadata: "PackageMetadata",
+    integration_spec: IntegrationRuntimeSpec,
+    metadata: PackageMetadata,
 ):
 
     network = create_network(config.ledger_url)
@@ -105,9 +105,7 @@ async def _aio_main(
     return False
 
 
-def _get_integration_types(
-    metadata: "PackageMetadata",
-) -> "Dict[str, IntegrationTypeInfo]":
+def _get_integration_types(metadata: PackageMetadata) -> Dict[str, IntegrationTypeInfo]:
 
     package_itypes = (
         metadata.integration_types
