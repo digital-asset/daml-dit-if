@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import abc
 import logging
 from dataclasses import dataclass, field
@@ -35,8 +37,8 @@ class IntegrationResponse:
     a sequence of zero or more ledger commands to issue.
     """
 
-    commands: "Optional[Sequence[Command]]" = field(default_factory=_empty_commands)
-    command_timeout: "int" = 5
+    commands: Optional[Sequence[Command]] = field(default_factory=_empty_commands)
+    command_timeout: int = 30
 
 
 class IntegrationQueueSink:
