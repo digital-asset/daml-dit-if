@@ -76,6 +76,7 @@ def as_handler_invocation(client: "AIOPartyClient", inv_status: "InvocationStatu
         response = None
         try:
             response = normalize_integration_response(await fn(*args, **kwargs))
+            exception = None
 
             if response.commands:
                 LOG.debug(
@@ -85,10 +86,19 @@ def as_handler_invocation(client: "AIOPartyClient", inv_status: "InvocationStatu
                 )
 
                 inv_status.command_count += len(response.commands)
+                try:
+                    await wait_for(
+                        client.submit(response.commands), response.command_timeout
+                    )
+                except Exception as e:
+                    exception = e
+                    LOG.warning("There was an exception when submitting commands!")
 
-                await wait_for(
-                    client.submit(response.commands), response.command_timeout
-                )
+            if exception and response.error_handler:
+                try:
+                    await response.error_handler(exception)
+                except Exception as e:
+                    LOG.warning(f"Error handler threw an exception: {e}")
 
             return response
 

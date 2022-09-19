@@ -4,7 +4,7 @@ import abc
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Optional, Sequence
+from typing import Any, Awaitable, Callable, Optional, Sequence
 
 from aiohttp.helpers import sentinel
 from aiohttp.web import Response
@@ -38,6 +38,7 @@ class IntegrationResponse:
     """
 
     commands: Optional[Sequence[Command]] = field(default_factory=_empty_commands)
+    error_handler: Optional[Callable[[Exception], Awaitable[None]]] = None
     command_timeout: int = 30
 
 
