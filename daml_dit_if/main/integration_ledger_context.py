@@ -1,8 +1,8 @@
 from dataclasses import dataclass
-from typing import Any, Callable, List, Optional, Sequence, Tuple
+from typing import Any, Callable, List, Optional, Sequence, Tuple, Awaitable
 
 from daml_dit_api import DamlModelInfo
-from dazl import AIOPartyClient
+from dazl import AIOPartyClient, Command
 from dazl.model.core import ContractMatch
 from dazl.model.reading import ContractCreateEvent
 from dazl.model.writing import EventHandlerResponse
@@ -103,6 +103,9 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
             initial=False,
             cid=dazl_event.cid,
             cdata=dazl_event.cdata)
+
+    async def submit(self, commands: 'Sequence[Command]') -> 'Awaitable[None]':
+        return await self.client.submit(commands)
 
     def ledger_init(self):
         handler_status = self._notice_handler('Ledger Init', None, False, True)

@@ -2,7 +2,7 @@ import abc
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Optional, Sequence
+from typing import Any, Callable, Optional, Sequence, Awaitable
 
 from aiohttp.helpers import sentinel
 from aiohttp.web import Response
@@ -209,6 +209,16 @@ class IntegrationLedgerEvents:
             A template name to subscribe to, or '*' to subscribe on all templates.
         :param match:
             An (optional) parameter that filters the templates to be received by the callback.
+        """
+
+    @abc.abstractmethod
+    async def submit(self, commands: 'Sequence[Command]') -> 'Awaitable[None]':
+        """
+        Directly send commands via the DAZL client's submit() function. Returns a future that resolves
+        when the command has made it to the ledger or raises an exception that can be caught if there
+        was a problem submitting the command.
+        :param commands:
+            A sequence of DAZL Commandsto be sent to the ledger
         """
 
 
