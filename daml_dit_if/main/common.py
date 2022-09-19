@@ -85,10 +85,13 @@ def as_handler_invocation(client: "AIOPartyClient", inv_status: "InvocationStatu
                 )
 
                 inv_status.command_count += len(response.commands)
-
-                await wait_for(
-                    client.submit(response.commands), response.command_timeout
-                )
+                try:
+                    await wait_for(
+                        client.submit(response.commands), response.command_timeout
+                    )
+                except Exception as e:
+                    if response.error_handler:
+                        await response.error_handler(e)
 
             return response
 
