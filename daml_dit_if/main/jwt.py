@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from asyncio import shield, sleep
 from datetime import timedelta
@@ -19,7 +21,7 @@ JWTClaims = Mapping[str, Any]
 
 
 class JWTValidator:
-    def __init__(self, jwks_urls: "Optional[Union[str, Collection[str]]]" = None):
+    def __init__(self, jwks_urls: Optional[Union[str, Collection[str]]] = None):
         from jwcrypto.jwk import JWKSet
 
         self.jwks_urls = jwks_urls
@@ -38,7 +40,7 @@ class JWTValidator:
             await shield(self._load_new_keys())
             LOG.debug("...JWKS poll complete.")
 
-    async def decode_claims(self, token: str) -> "JWTClaims":
+    async def decode_claims(self, token: str) -> JWTClaims:
         from jwcrypto.jwt import JWT
 
         LOG.debug("Verifying token: %r", token)
@@ -49,7 +51,7 @@ class JWTValidator:
         jwt = JWT(jwt=token, key=self.keys)
         return json.loads(jwt.claims)
 
-    async def get_key(self, kid: str) -> "Optional[JWK]":
+    async def get_key(self, kid: str) -> Optional[JWK]:
         """
         Retrieve a key for a given ``kid``. If the key could not be found, the keystore is
         refreshed, and if a key is discovered through that process, it is returned. May return
@@ -63,7 +65,7 @@ class JWTValidator:
 
         return key
 
-    def export_all_keys(self) -> "str":
+    def export_all_keys(self) -> str:
         """
         Return a JSON string that formats all public keys currently in the store as JWKS.
         """

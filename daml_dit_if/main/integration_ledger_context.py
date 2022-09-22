@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Any, Callable, List, Optional, Sequence, Tuple
 
@@ -42,9 +44,9 @@ class LedgerHandlerStatus(InvocationStatus):
 class IntegrationLedgerContext(IntegrationLedgerEvents):
     def __init__(
         self,
-        queue: "IntegrationDeferralQueue",
-        client: "AIOPartyClient",
-        daml_model: "Optional[DamlModelInfo]",
+        queue: IntegrationDeferralQueue,
+        client: AIOPartyClient,
+        daml_model: Optional[DamlModelInfo],
     ):
         self.queue = queue
 
@@ -60,10 +62,10 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
     def _notice_handler(
         self,
         label: str,
-        template_id: "Optional[str]",
+        template_id: Optional[str],
         sweep_enabled: bool,
         flow_enabled: bool,
-    ) -> "LedgerHandlerStatus":
+    ) -> LedgerHandlerStatus:
 
         handler_status = LedgerHandlerStatus(
             index=len(self.handlers),
@@ -195,7 +197,7 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
     def contract_created(
         self,
         template: Any,
-        match: "Optional[ContractMatch]" = None,
+        match: Optional[ContractMatch] = None,
         sweep: bool = True,
         flow: bool = True,
         package_defaulting: bool = True,
@@ -238,7 +240,7 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
     def contract_archived(
         self,
         template: Any,
-        match: "Optional[ContractMatch]" = None,
+        match: Optional[ContractMatch] = None,
         package_defaulting: bool = True,
     ):
 
@@ -270,5 +272,5 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
 
         return wrap_method
 
-    def get_status(self) -> "Sequence[LedgerHandlerStatus]":
+    def get_status(self) -> Sequence[LedgerHandlerStatus]:
         return self.handlers

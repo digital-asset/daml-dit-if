@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 from asyncio import ensure_future, gather
 from dataclasses import asdict
@@ -34,10 +36,10 @@ CLIENT_MAX_SIZE = 100 * (1024**2)
 LOG_SUPPRESSED_ROUTE_REGEX = re.compile("^(/integration/[\w]+)?/((healthz)|(status))$")
 
 
-def _build_control_routes(integration_context: "IntegrationContext") -> "RouteTableDef":
+def _build_control_routes(integration_context: IntegrationContext) -> RouteTableDef:
     routes = RouteTableDef()
 
-    def _get_status(request: "Request"):
+    def _get_status(request: Request):
         return {
             **asdict(integration_context.get_status()),
             "log_level": get_log_level(),
@@ -47,18 +49,18 @@ def _build_control_routes(integration_context: "IntegrationContext") -> "RouteTa
 
     @routes.get("/integration/{integration_id}/healthz")
     @auth_level(AuthorizationLevel.ANY_PARTY)
-    async def get_container_health(request: "Request") -> "Response":
+    async def get_container_health(request: Request) -> Response:
         response_dict = {**_get_status(request), "_self": str(request.url)}
         return json_response(response_dict)
 
     @routes.get("/integration/{integration_id}/status")
     @auth_level(AuthorizationLevel.ANY_PARTY)
-    async def get_container_status(request: "Request") -> "Response":
+    async def get_container_status(request: Request) -> Response:
         return json_response(_get_status(request))
 
     @routes.post("/integration/{integration_id}/log-level")
     @auth_level(AuthorizationLevel.ANY_PARTY)
-    async def set_level(request: "Request") -> "Response":
+    async def set_level(request: Request) -> Response:
         body = await request.json()
 
         set_log_level(int(body["log_level"]))
@@ -93,7 +95,7 @@ def _log_suppressed_route(path: str) -> bool:
 
 
 class IntegrationAccessLogger(AccessLogger):
-    def log(self, request: "BaseRequest", response: "StreamResponse", time: float):
+    def log(self, request: BaseRequest, response: StreamResponse, time: float):
 
         path = request.rel_url.path
 
@@ -105,7 +107,7 @@ class IntegrationAccessLogger(AccessLogger):
 
 
 async def start_web_endpoint(
-    config: "Configuration", integration_context: "IntegrationContext"
+    config: Configuration, integration_context: IntegrationContext
 ):
 
     LOG.info("Starting web endpoint...")

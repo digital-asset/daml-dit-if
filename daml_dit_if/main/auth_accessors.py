@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Optional
 
 from aiohttp.web import Request
@@ -10,8 +12,8 @@ DABL_JWT_LEDGER_CLAIMS = "DABL_JWT_LEDGER_CLAIMS"
 
 
 def get_configured_integration_ledger_claims(
-    config: "Configuration", claims: "JWTClaims"
-) -> "Optional[JWTClaims]":
+    config: Configuration, claims: JWTClaims
+) -> Optional[JWTClaims]:
 
     """
     Given an IF configuration and a dict of claims from a DAML Ledger
@@ -39,7 +41,7 @@ def get_configured_integration_ledger_claims(
 
 
 def is_integration_party_ledger_claim(
-    config: "Configuration", ledger_claims: "JWTClaims"
+    config: Configuration, ledger_claims: JWTClaims
 ) -> bool:
     """
     Given an IF configuration and a dict of DAML ledger claims from
@@ -58,7 +60,7 @@ def is_integration_party_ledger_claim(
     return party in read_as_parties and party in act_as_parties
 
 
-def get_request_claims(request: "Request"):
+def get_request_claims(request: Request):
     """
     Return the DAML ledger claims for the request's JWT token. If there
     are no such claims, or the token has not been extracted (as in a
@@ -67,7 +69,7 @@ def get_request_claims(request: "Request"):
     return request.get(DABL_JWT_LEDGER_CLAIMS, None)
 
 
-def get_request_parties(request: "Request"):
+def get_request_parties(request: Request):
     """
     Get the DAML ledger parties identified in the current request's JWT
     token. The parties returned by this function are the parties that
@@ -86,7 +88,7 @@ def get_request_parties(request: "Request"):
     return list(set(read_as_parties).intersection(set(act_as_parties)))
 
 
-def get_single_request_party(request: "Request"):
+def get_single_request_party(request: Request):
     """
     Returns the single DAML ledger party identified in the current request's
     JWT. For a party to be returned by this function, it must appear in _both_

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from functools import wraps
 from typing import List, Optional, Sequence
@@ -18,7 +20,7 @@ from .integration_deferral_queue import IntegrationDeferralQueue
 from .log import LOG
 
 
-def empty_success_response() -> "web.HTTPOk":
+def empty_success_response() -> web.HTTPOk:
     return web.HTTPOk()
 
 
@@ -28,7 +30,7 @@ class WebhookRouteStatus(InvocationStatus):
     method: str
 
 
-def get_http_response(hook_response: "IntegrationWebhookResponse"):
+def get_http_response(hook_response: IntegrationWebhookResponse):
     response = empty_success_response()  # type: web.Response
 
     if hook_response.response is not None:
@@ -70,7 +72,7 @@ def get_http_response(hook_response: "IntegrationWebhookResponse"):
 
 
 class IntegrationWebhookContext(IntegrationWebhookRoutes):
-    def __init__(self, queue: "IntegrationDeferralQueue", client: "AIOPartyClient"):
+    def __init__(self, queue: IntegrationDeferralQueue, client: AIOPartyClient):
         self.route_table = RouteTableDef()
         self.client = client
 
@@ -84,8 +86,8 @@ class IntegrationWebhookContext(IntegrationWebhookRoutes):
         return wrapped
 
     def _notice_hook_route(
-        self, url_path: str, method: str, label: "Optional[str]"
-    ) -> "WebhookRouteStatus":
+        self, url_path: str, method: str, label: Optional[str]
+    ) -> WebhookRouteStatus:
 
         LOG.info("Registered hook (label: %s): %s %r", label, method, url_path)
 
@@ -105,14 +107,14 @@ class IntegrationWebhookContext(IntegrationWebhookRoutes):
 
         return route_status
 
-    def _url_path(self, url_suffix: "Optional[str]"):
+    def _url_path(self, url_suffix: Optional[str]):
         return "/integration/{integration_id}" + (url_suffix or "")
 
     def post(
         self,
-        url_suffix: "Optional[str]" = None,
-        label: "Optional[str]" = None,
-        auth: "Optional[AuthorizationLevel]" = AuthorizationLevel.PUBLIC,
+        url_suffix: Optional[str] = None,
+        label: Optional[str] = None,
+        auth: Optional[AuthorizationLevel] = AuthorizationLevel.PUBLIC,
     ):
         path = self._url_path(url_suffix)
         hook_status = self._notice_hook_route(path, "post", label)
@@ -132,9 +134,9 @@ class IntegrationWebhookContext(IntegrationWebhookRoutes):
 
     def get(
         self,
-        url_suffix: "Optional[str]" = None,
-        label: "Optional[str]" = None,
-        auth: "Optional[AuthorizationLevel]" = AuthorizationLevel.PUBLIC,
+        url_suffix: Optional[str] = None,
+        label: Optional[str] = None,
+        auth: Optional[AuthorizationLevel] = AuthorizationLevel.PUBLIC,
     ):
         path = self._url_path(url_suffix)
         hook_status = self._notice_hook_route(path, "get", label)
@@ -152,5 +154,5 @@ class IntegrationWebhookContext(IntegrationWebhookRoutes):
 
         return wrap_method
 
-    def get_status(self) -> "Sequence[WebhookRouteStatus]":
+    def get_status(self) -> Sequence[WebhookRouteStatus]:
         return self.routes

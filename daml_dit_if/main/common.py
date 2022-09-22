@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import collections
 import sys
 from asyncio import wait_for
@@ -23,12 +25,12 @@ class IntegrationQueueStatus:
 @dataclass
 class InvocationStatus:
     index: int
-    label: "Optional[str]"
+    label: Optional[str]
     command_count: int
     use_count: int
     error_count: int
-    error_message: "Optional[str]"
-    error_time: "Optional[datetime]"
+    error_message: Optional[str]
+    error_time: Optional[datetime]
 
 
 def without_return_value(fn):
@@ -67,7 +69,7 @@ def normalize_integration_response(response):
     return IntegrationResponse(commands=commands)
 
 
-def as_handler_invocation(client: "AIOPartyClient", inv_status: "InvocationStatus", fn):
+def as_handler_invocation(client: AIOPartyClient, inv_status: InvocationStatus, fn):
     @wraps(fn)
     async def wrapped(*args, **kwargs):
         LOG.debug("Invoking for invocation status: %r", inv_status)

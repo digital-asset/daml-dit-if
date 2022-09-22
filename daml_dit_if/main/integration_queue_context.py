@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any, Awaitable, Callable, Dict, Sequence, Tuple
 
 from dazl import AIOPartyClient, Command
@@ -16,7 +18,7 @@ class IntegrationQueueSinkImpl(IntegrationQueueSink):
     def __init__(self, queues: IntegrationQueueDict):
         self.queues = queues
 
-    async def put(self, message: "Any", queue_name: "str" = "default"):
+    async def put(self, message: Any, queue_name: str = "default"):
 
         LOG.debug("Queue put (%r): %r", queue_name, message)
 
@@ -33,13 +35,13 @@ class IntegrationQueueSinkImpl(IntegrationQueueSink):
 
 
 class IntegrationQueueContext(IntegrationQueueEvents):
-    def __init__(self, queue: "IntegrationDeferralQueue", client: "AIOPartyClient"):
+    def __init__(self, queue: IntegrationDeferralQueue, client: AIOPartyClient):
         self.queue = queue
         self.client = client
         self.queues = {}  # type: IntegrationQueueDict
         self.sink = IntegrationQueueSinkImpl(self.queues)
 
-    def message(self, queue_name: "str" = "default"):
+    def message(self, queue_name: str = "default"):
         def decorator(fn: "IntegrationQueueHandler"):
             status = InvocationStatus(
                 index=len(self.queues),
@@ -72,5 +74,5 @@ class IntegrationQueueContext(IntegrationQueueEvents):
 
         return decorator
 
-    def get_status(self) -> "Sequence[InvocationStatus]":
+    def get_status(self) -> Sequence[InvocationStatus]:
         return [status for (_, status) in self.queues.values()]
