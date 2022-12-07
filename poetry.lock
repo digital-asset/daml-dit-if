@@ -302,16 +302,15 @@ requirements-deprecated-finder = ["pip-api", "pipreqs"]
 
 [[package]]
 name = "jwcrypto"
-version = "0.9.1"
+version = "1.4"
 description = "Implementation of JOSE Web standards"
 category = "main"
 optional = false
-python-versions = "*"
+python-versions = ">= 3.6"
 
 [package.dependencies]
 cryptography = ">=2.3"
 deprecated = "*"
-six = "*"
 
 [[package]]
 name = "more-itertools"
@@ -657,7 +656,7 @@ develop = []
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7, <4.0"
-content-hash = "1d9f4a311e138ca5f5c800e45abe2c5789a798132998716aaaa1fd69de83ff53"
+content-hash = "966847c2f3339c11fb65f2b2cb8219c3d207dc2af3ac45e64323c73d9d2d2935"
 
 [metadata.files]
 aiohttp = [
@@ -1026,8 +1025,7 @@ isort = [
     {file = "isort-5.10.1.tar.gz", hash = "sha256:e8443a5e7a020e9d7f97f1d7d9cd17c88bcb3bc7e218bf9cf5095fe550be2951"},
 ]
 jwcrypto = [
-    {file = "jwcrypto-0.9.1-py2.py3-none-any.whl", hash = "sha256:12976a09895ec0076ce17c49ab7be64d6e63bcd7fd9a773e3fedf8011537a5f6"},
-    {file = "jwcrypto-0.9.1.tar.gz", hash = "sha256:63531529218ba9869e14ef8c9e7b516865ede3facf9b0ef3d3ba68014da211f9"},
+    {file = "jwcrypto-1.4.tar.gz", hash = "sha256:30bcfc2d199f2f1a52d04558ffa99112ad81d7b787f29e0d9aa4ef499934307e"},
 ]
 more-itertools = [
     {file = "more-itertools-8.14.0.tar.gz", hash = "sha256:c09443cd3d5438b8dafccd867a6bc1cb0894389e90cb53d227456b0b0bccb750"},
