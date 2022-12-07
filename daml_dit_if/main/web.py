@@ -10,12 +10,14 @@ from aiohttp.web import (
     Application,
     AppRunner,
     BaseRequest,
+    HTTPOk,
     Request,
     Response,
     RouteTableDef,
     StreamResponse,
     TCPSite,
 )
+from prometheus_client import REGISTRY, exposition, generate_latest
 
 from ..api import json_response
 from .auth_handler import AuthHandler, AuthorizationLevel, auth_level
@@ -33,7 +35,9 @@ from .log import (
 # cap aiohttp to allow a maximum of 100 MB for the size of a body.
 CLIENT_MAX_SIZE = 100 * (1024**2)
 
-LOG_SUPPRESSED_ROUTE_REGEX = re.compile("^(/integration/[\w]+)?/((healthz)|(status))$")
+LOG_SUPPRESSED_ROUTE_REGEX = re.compile(
+    "^(/integration/[\w]+)?/((healthz)|(status)|(metrics))$"
+)
 
 
 def _build_control_routes(integration_context: IntegrationContext) -> RouteTableDef:
@@ -86,6 +90,16 @@ def _build_control_routes(integration_context: IntegrationContext) -> RouteTable
     @routes.post("/log-level")
     async def internal_set_level(request):
         return await set_level(request)
+
+    @routes.get("/metrics")
+    async def metrics(request):
+        if accept_header := request.headers.get("Accept"):
+            encoder, _ = exposition.choose_encoder(accept_header)
+        else:
+            encoder = generate_latest
+
+        metrics_bytes: bytes = encoder(REGISTRY)
+        return HTTPOk(body=metrics_bytes, content_type="text/plain; version=0.0.4")
 
     return routes
 
