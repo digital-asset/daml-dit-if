@@ -14,7 +14,6 @@ DABL_JWT_LEDGER_CLAIMS = "DABL_JWT_LEDGER_CLAIMS"
 def get_configured_integration_ledger_claims(
     config: Configuration, claims: JWTClaims
 ) -> Optional[JWTClaims]:
-
     """
     Given an IF configuration and a dict of claims from a DAML Ledger
     JWT, return the ledger claims from that token, if and only if they

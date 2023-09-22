@@ -88,7 +88,6 @@ class IntegrationWebhookContext(IntegrationWebhookRoutes):
     def _notice_hook_route(
         self, url_path: str, method: str, label: Optional[str]
     ) -> WebhookRouteStatus:
-
         LOG.info("Registered hook (label: %s): %s %r", label, method, url_path)
 
         route_status = WebhookRouteStatus(

@@ -75,7 +75,6 @@ def _as_int(value: Any) -> int:
 
 
 def parse_qualified_symbol(symbol_text: str):
-
     try:
         (module_name, sym_name) = symbol_text.split(":")
     except ValueError:
@@ -107,7 +106,6 @@ class IntegrationContext:
         integration_spec: IntegrationRuntimeSpec,
         metadata: PackageMetadata,
     ):
-
         self.start_time = datetime.utcnow()
 
         self.type_id = type_id
@@ -134,7 +132,6 @@ class IntegrationContext:
         self.int_toplevel_coro = None
 
     def _party_fallback_to_metadata(self):
-
         if self.run_as_party:
             return
 
@@ -156,7 +153,6 @@ class IntegrationContext:
     def get_integration_entrypoint(
         self, integration_type: IntegrationTypeInfo
     ) -> IntegrationEntryPoint:
-
         (module, entry_fn_name) = parse_qualified_symbol(integration_type.entrypoint)
 
         return getattr(module, entry_fn_name)
@@ -164,7 +160,6 @@ class IntegrationContext:
     def get_integration_env_class(
         self, integration_type: IntegrationTypeInfo
     ) -> Type[IntegrationEnvironment]:
-
         if integration_type.env_class:
             (module, env_class_name) = parse_qualified_symbol(
                 integration_type.env_class

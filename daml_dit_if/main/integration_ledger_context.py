@@ -66,7 +66,6 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
         sweep_enabled: bool,
         flow_enabled: bool,
     ) -> LedgerHandlerStatus:
-
         handler_status = LedgerHandlerStatus(
             index=len(self.handlers),
             label=label,
@@ -90,10 +89,10 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
         for init_handler in self.init_handlers:
             await init_handler()
 
-        for (template, match, wfunc) in self.sweeps:
+        for template, match, wfunc in self.sweeps:
             LOG.debug("Processing sweep for %r", template)
 
-            for (cid, cdata) in self.client.find_active(template, match).items():
+            for cid, cdata in self.client.find_active(template, match).items():
                 LOG.debug("Sweep contract: %r => %r", cid, cdata)
 
                 await wfunc(
@@ -202,7 +201,6 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
         flow: bool = True,
         package_defaulting: bool = True,
     ):
-
         if package_defaulting:
             ftemplate = ensure_package_id(self.daml_model, template)
         else:
@@ -243,7 +241,6 @@ class IntegrationLedgerContext(IntegrationLedgerEvents):
         match: Optional[ContractMatch] = None,
         package_defaulting: bool = True,
     ):
-
         if package_defaulting:
             ftemplate = ensure_package_id(self.daml_model, template)
         else:
