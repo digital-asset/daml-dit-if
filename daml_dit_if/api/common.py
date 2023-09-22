@@ -15,7 +15,6 @@ LOG = logging.getLogger("daml-dit-if")
 
 
 def ensure_package_id(daml_model: Optional[DamlModelInfo], template: str) -> str:
-
     if template == "*":
         return template
 
@@ -38,19 +37,19 @@ DEFAULT_ENCODER = JSONEncoder()
 def json_response(
     data: Any = sentinel,
     *,
-    text: str = None,
-    body: bytes = None,
+    text: Optional[str] = None,
+    body: Optional[bytes] = None,
     status: int = 200,
     reason: Optional[str] = None,
-    headers: LooseHeaders = None,
+    headers: Optional[LooseHeaders] = None,
 ) -> web.Response:
     return web.json_response(
         data=data,
-        text=text,
-        body=body,
+        text=text,  # type: ignore
+        body=body,  # type: ignore
         status=status,
         reason=reason,
-        headers=headers,
+        headers=headers,  # type: ignore
         dumps=lambda obj: DEFAULT_ENCODER.encode(obj) + "\n",
     )
 
@@ -62,7 +61,6 @@ def empty_success_response() -> web.HTTPOk:
 def blob_success_response(
     body: bytes, content_type: Optional[str] = "application/octet-stream"
 ) -> "web.HTTPOk":
-
     return web.HTTPOk(body=body, content_type=content_type)
 
 

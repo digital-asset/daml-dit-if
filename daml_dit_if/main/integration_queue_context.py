@@ -19,7 +19,6 @@ class IntegrationQueueSinkImpl(IntegrationQueueSink):
         self.queues = queues
 
     async def put(self, message: Any, queue_name: str = "default"):
-
         LOG.debug("Queue put (%r): %r", queue_name, message)
 
         if queue_name not in self.queues:

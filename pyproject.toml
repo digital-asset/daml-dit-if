@@ -8,25 +8,25 @@ repository = "https://github.com/digital-asset/daml-dit-if"
 keywords = ["daml", "blockchain", "dlt", "distributed ledger", "digital asset"]
 
 [tool.poetry.dependencies]
-python = ">=3.7, <4.0"
+python = ">=3.8, <4.0"
 aiohttp = "*"
 dacite = "*"
-idna = "^2"
-pyyaml = "^5"
+idna = "*"
+pyyaml = "*"
 dazl = "^7"
 daml-dit-api = "0.4.3"
-jwcrypto = "0.9.1"
-prometheus-client = "0.15.0"
+jwcrypto = "*"
+prometheus-client = "*"
 
 [tool.poetry.dev-dependencies]
 mypy = "*"
-pytest = "^5.4.3"
+pytest = "*"
 pytest-asyncio = "*"
 pytest-codestyle = "*"
-isort = "^5.10.1"
-types-PyYAML = "^6.0.3"
-types-setuptools = "^57.4.7"
-black = "^22.6.0"
+isort = "*"
+types-PyYAML = "*"
+types-setuptools = "*"
+black = "*"
 
 [tool.poetry.extras]
 develop = []
@@ -36,5 +36,5 @@ add_imports = ["from __future__ import annotations"]
 profile = "black"
 
 [build-system]
-requires = ["poetry_core==1.0.0a8"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

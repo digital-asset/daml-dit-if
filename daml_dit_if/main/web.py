@@ -80,19 +80,19 @@ def _build_control_routes(integration_context: IntegrationContext) -> RouteTable
     # is implemented internally, these will be deprecated and replaced
     # entirely with the secured external endpoints above.
     @routes.get("/healthz")
-    async def internal_get_container_health(request):
+    async def internal_get_container_health(request: Request) -> StreamResponse:
         return await get_container_health(request)
 
     @routes.get("/status")
-    async def internal_get_container_status(request):
+    async def internal_get_container_status(request: Request) -> StreamResponse:
         return await get_container_status(request)
 
     @routes.post("/log-level")
-    async def internal_set_level(request):
+    async def internal_set_level(request: Request) -> StreamResponse:
         return await set_level(request)
 
     @routes.get("/metrics")
-    async def metrics(request):
+    async def metrics(request: Request) -> StreamResponse:
         if accept_header := request.headers.get("Accept"):
             encoder, _ = exposition.choose_encoder(accept_header)
         else:
@@ -110,7 +110,6 @@ def _log_suppressed_route(path: str) -> bool:
 
 class IntegrationAccessLogger(AccessLogger):
     def log(self, request: BaseRequest, response: StreamResponse, time: float):
-
         path = request.rel_url.path
 
         # Suppress polled routes to avoid cluttering the logs.
@@ -123,7 +122,6 @@ class IntegrationAccessLogger(AccessLogger):
 async def start_web_endpoint(
     config: Configuration, integration_context: IntegrationContext
 ):
-
     LOG.info("Starting web endpoint...")
 
     web_coros = []

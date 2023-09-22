@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Awaitable, Callable, Optional
 
-from aiohttp.web import Application, Request, Response
+from aiohttp.web import Application, Request, StreamResponse
 from aiohttp.web_middlewares import middleware
 from jwcrypto.common import JWException
 
@@ -17,7 +17,7 @@ from .config import Configuration
 from .jwt import JWTValidator
 from .log import LOG
 
-Handler = Callable[[Request], Awaitable[Response]]
+Handler = Callable[[Request], Awaitable[StreamResponse]]
 
 
 DABL_AUTH_LEVEL = "__dabl_auth_level__"
@@ -79,7 +79,6 @@ class AuthHandler:
         auth_level = get_handler_auth_level(request)
 
         if auth_level != AuthorizationLevel.PUBLIC:
-
             if self.jwt_decoder is None:
                 raise unauthorized_response(
                     "no_authorization_support",
@@ -116,7 +115,6 @@ class AuthHandler:
                 auth_level == AuthorizationLevel.INTEGRATION_PARTY
                 and not is_integration_party_ledger_claim(self.config, ledger_claims)
             ):
-
                 raise unauthorized_response(
                     "unauthorized",
                     "unauthorized token",

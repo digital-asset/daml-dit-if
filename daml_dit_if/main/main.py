@@ -78,7 +78,6 @@ async def _aio_main(
     integration_spec: IntegrationRuntimeSpec,
     metadata: PackageMetadata,
 ):
-
     network = create_network(config.ledger_url)
     dazl_coro = ensure_future(run_dazl_network(network))
 
@@ -106,7 +105,6 @@ async def _aio_main(
 
 
 def _get_integration_types(metadata: PackageMetadata) -> Dict[str, IntegrationTypeInfo]:
-
     package_itypes = (
         metadata.integration_types
         or metadata.integrations  # support for deprecated
