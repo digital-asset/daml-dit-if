@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "daml-dit-if"
-version = "0.7.0"
+version = "0.7.1"
 description = "Daml Hub Integration Framework"
 authors = ["Daml Hub Team <no-reply@digitalasset.com>"]
 readme = "README.md"
@@ -14,7 +14,7 @@ dacite = "*"
 idna = "*"
 pyyaml = "*"
 dazl = "^7"
-daml-dit-api = "^0.4.3"
+daml-dit-api = "*"
 jwcrypto = "*"
 prometheus-client = "*"
 
