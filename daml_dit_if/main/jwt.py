@@ -43,9 +43,9 @@ class JWTValidator:
     async def decode_claims(self, token: str) -> JWTClaims:
         from jwcrypto.jwt import JWT
 
-        LOG.debug("Verifying token: %r", token)
         jwt = JWT(jwt=token)
         key = jwt.token.jose_header["kid"]
+        LOG.debug("Verifying token with key: %r", key)
         await self.get_key(key)
 
         jwt = JWT(jwt=token, key=self.keys)
